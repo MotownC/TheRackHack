@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Products collection - public read, authenticated write
+    match /products/{productId} {
+      allow read: if true;  // Anyone can read products
+      allow write: if isSignedIn();  // Only authenticated users (admins) can create/update/delete
+    }
+
+    // Orders collection - authenticated access only
+    match /orders/{orderId} {
+      allow read: if isSignedIn();  // Only admins can read orders
+      allow create: if true;  // Anyone can create orders (for checkout)
+      allow update, delete: if isSignedIn();  // Only admins can update/delete
+    }
+
+    // About collection - public read, authenticated write
+    match /about/{document} {
+      allow read: if true;  // Anyone can read about content
+      allow write: if isSignedIn();  // Only authenticated users (admins) can edit
+    }
+  }
+}
