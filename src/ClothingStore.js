@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Trash2, Plus, Minus, Package, TrendingUp, Mail, Edit, PlusCircle, LogOut, Lock } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom'; 
 import ContactModal from './components/ContactModal';
-import StripeCheckout from './components/StripeCheckout';
 import ProductEditor from './components/ProductEditor';
+import GlowButton from './components/GlowButton';
 import banner from './assets/banner.png';
 import logo from './assets/logo.png';
 import { 
@@ -13,6 +13,7 @@ import {
   deleteProduct,
   getAllOrders,
   addOrder,
+  updateOrder,
   getAboutContent,
   saveAboutContent
 } from './services/productService';
@@ -113,17 +114,14 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           setProducts(firebaseProducts);
         }
         
-        // Load Orders and About content
-        // Note: Cart loading is removed here because we now do it in useState
-        const ordersData = localStorage.getItem('orders');
-        const aboutData = localStorage.getItem('aboutContent');
-        
-        if (ordersData) {
-          setOrders(JSON.parse(ordersData));
-        }
-        
+        // Load Orders from Firestore
+        const firestoreOrders = await getAllOrders();
+        setOrders(firestoreOrders);
+
+        // Load About content from Firestore
+        const aboutData = await getAboutContent();
         if (aboutData) {
-          setAboutContent(JSON.parse(aboutData));
+          setAboutContent(aboutData);
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -134,23 +132,6 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
     loadData();
   }, []);          
           
-  // Save products to Firebase when they change
-  useEffect(() => {
-    // Skip on initial mount when products are empty
-    if (products.length === 0) return;
-    
-    const saveProducts = async () => {
-      try {
-        // Products are already saved to Firebase via addProduct/updateProduct
-        // This localStorage backup can be removed if you want Firebase only
-        await localStorage.setItem('products', JSON.stringify(products));
-      } catch (error) {
-        console.error('Error saving products:', error);
-      }
-    };
-    saveProducts();
-  }, [products]);
-
   // Save cart when it changes
   useEffect(() => {
     const saveCart = async () => {
@@ -199,8 +180,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       return;
     }
 
-    const order = {
-      id: Date.now(),
+    const orderData = {
       date: new Date().toISOString(),
       customer: checkoutForm,
       items: cart,
@@ -208,30 +188,36 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       status: 'Pending Payment'
     };
 
-    // Update inventory
-    const updatedProducts = products.map(product => {
-      const cartItem = cart.find(item => item.id === product.id);
-      if (cartItem) {
-        return { ...product, stock: product.stock - cartItem.quantity };
-      }
-      return product;
-    });
-
-    const newOrders = [...orders, order];
-    setOrders(newOrders);
-    setProducts(updatedProducts);
-    
-    // Save orders
     try {
-      await localStorage.setItem('orders', JSON.stringify(newOrders));
-    } catch (error) {
-      console.error('Error saving orders:', error);
-    }
+      // Save order to Firestore
+      const savedOrder = await addOrder(orderData);
+      setOrders([...orders, savedOrder]);
 
-    setCart([]);
-    setCheckoutForm({ name: '', email: '', address: '', city: '', state: '', zip: '' });
-    setView('shop');
-    alert('Order placed! You will receive payment instructions via email.');
+      // Update inventory in Firestore
+      for (const cartItem of cart) {
+        const product = products.find(p => p.id === cartItem.id);
+        if (product) {
+          await updateProduct(product.id, { stock: product.stock - cartItem.quantity });
+        }
+      }
+
+      // Update local product state
+      setProducts(products.map(product => {
+        const cartItem = cart.find(item => item.id === product.id);
+        if (cartItem) {
+          return { ...product, stock: product.stock - cartItem.quantity };
+        }
+        return product;
+      }));
+
+      setCart([]);
+      setCheckoutForm({ name: '', email: '', address: '', city: '', state: '', zip: '' });
+      setView('shop');
+      alert('Order placed! You will receive payment instructions via email.');
+    } catch (error) {
+      console.error('Error saving order:', error);
+      alert('Failed to place order. Please try again.');
+    }
   };
 
   const handleSaveProduct = async (productData) => {
@@ -395,46 +381,20 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-slate-600 mb-2">CATEGORY</h3>
               <div className="flex flex-wrap gap-2 sm:gap-3">
-                <button
-                  onClick={() => setGenderFilter('all')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    genderFilter === 'all'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setGenderFilter('mens')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    genderFilter === 'mens'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Men's
-                </button>
-                <button
-                  onClick={() => setGenderFilter('womens')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    genderFilter === 'womens'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Women's
-                </button>
-                <button
-                  onClick={() => setGenderFilter('kids')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    genderFilter === 'kids'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Kids
-                </button>
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: 'mens', label: "Men's" },
+                  { value: 'womens', label: "Women's" },
+                  { value: 'kids', label: 'Kids' }
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setGenderFilter(value)}
+                    className={genderFilter === value ? 'glow-btn glow-filter-active' : 'glow-filter'}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -442,36 +402,19 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             <div className="mb-8">
               <h3 className="text-sm font-semibold text-slate-600 mb-2">CONDITION</h3>
               <div className="flex flex-wrap gap-2 sm:gap-3">
-                <button
-                  onClick={() => setConditionFilter('all')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    conditionFilter === 'all'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setConditionFilter('new')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    conditionFilter === 'new'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  New
-                </button>
-                <button
-                  onClick={() => setConditionFilter('used')}
-                  className={`px-4 sm:px-6 py-2 min-h-[44px] rounded-lg font-medium transition-colors duration-200 ${
-                    conditionFilter === 'used'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Pre-Owned
-                </button>
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: 'new', label: 'New' },
+                  { value: 'used', label: 'Pre-Owned' }
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setConditionFilter(value)}
+                    className={conditionFilter === value ? 'glow-btn glow-filter-active' : 'glow-filter'}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -529,13 +472,14 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                         {product.stock} in stock
                       </span>
                     </div>
-                    <button
+                    <GlowButton
+                      label={product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                       onClick={() => addToCart(product)}
                       disabled={product.stock === 0}
-                      className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    </button>
+                      showIcon={product.stock > 0}
+                      icon={ShoppingCart}
+                      className="glow-btn-full"
+                    />
                   </div>
                 </div>
               ))}
@@ -550,12 +494,11 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
                 <ShoppingCart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-600 text-lg">Your cart is empty</p>
-                <button
+                <GlowButton
+                  label="Continue Shopping"
                   onClick={() => setView('shop')}
-                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  Continue Shopping
-                </button>
+                  className="mt-4"
+                />
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -612,12 +555,11 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                     </p>
                   </div>
 
-                  <button 
+                  <GlowButton
+                    label="Proceed to Checkout"
                     onClick={() => navigate('/checkout')}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold"
-                  >
-                    Proceed to Checkout
-                  </button>
+                    className="glow-btn-full"
+                  />
                    
                   <div className="mt-4 flex justify-center gap-2 text-slate-400">
                      <span className="text-xs flex items-center gap-1"><Lock className="w-3 h-3" /> Secure Checkout</span>
@@ -881,12 +823,11 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 <p className="text-slate-300 text-sm mb-4">
                   Have questions? We'd love to hear from you.
                 </p>
-                <button
+                <GlowButton
+                  label="Get in Touch"
                   onClick={() => setIsContactModalOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  Get in Touch
-                </button>
+                  icon={Mail}
+                />
               </div>
             </div>
 

@@ -8,7 +8,9 @@ The Rack Hack is a React-based e-commerce website for selling pre-owned and new 
 - **Backend**: Firebase (Firestore, Authentication, Hosting)
 - **Icons**: Lucide React
 - **Image Upload**: Cloudinary
-- **Payment**: Stripe integration (in progress)
+- **Payment**: Stripe Checkout (via server.js backend)
+- **Shipping**: ShipEngine API (USPS rates via server.js backend)
+- **Typography**: Google Fonts (Rubik for headings, Nunito Sans for body)
 
 ## Project Structure
 ```
@@ -17,13 +19,15 @@ src/
 │   ├── ProductEditor.js # Modal for adding/editing products
 │   ├── CloudinaryUpload.js # Image upload component
 │   ├── ContactModal.js  # Contact form modal
-│   └── ProtectedRoute.js # Auth-protected routes
+│   ├── ProtectedRoute.js # Auth-protected routes
+│   └── CompleteCheckout.js # Full checkout form with shipping & Stripe payment
 ├── contexts/
 │   └── AuthContext.js   # Firebase authentication context
 ├── pages/              # Page components
 │   ├── AboutPage.js    # About page
 │   ├── ItemDetail.js   # Individual product page
-│   └── ShopPage.js     # Main shop listing
+│   ├── ShopPage.js     # Main shop listing
+│   └── CheckoutPage.js # Checkout page with cart summary
 ├── services/
 │   └── productService.js # Firebase Firestore operations
 ├── assets/             # Images and static files
@@ -47,7 +51,8 @@ public/
 - Filter by condition (New, Pre-Owned)
 - View product details with full images and descriptions
 - Shopping cart with quantity management
-- Checkout process (Stripe integration in progress)
+- Multi-step checkout: contact info, shipping (live USPS rates via ShipEngine), Stripe payment
+- Orders stored in Firestore (visible in admin dashboard)
 
 ### Admin Features (Authentication Required)
 - Login/Signup system using Firebase Authentication
@@ -70,8 +75,9 @@ public/
    - Access: Public read, authenticated write
 
 2. **orders**
-   - Fields: customer (object), items, total, date, status
+   - Fields: customer (object), items, total, date, status, createdAt, updatedAt
    - Access: Public create, authenticated read/update/delete
+   - Service functions: getAllOrders, addOrder, updateOrder
 
 3. **about**
    - Fields: title, content
@@ -92,12 +98,21 @@ Located in `firestore.rules`:
 
 ### Running the App
 ```bash
-npm start
+npm start          # React frontend on http://localhost:3000
+node server.js     # Backend API server on http://localhost:3001
 ```
-Runs on http://localhost:3000 or network IP (http://192.168.1.50:3000)
+Both must be running for checkout (Stripe) and shipping (ShipEngine) to work.
+Also accessible on local network at http://192.168.1.50:3000
 
 ### Environment Variables
-Firebase config is in `src/firebase.js` (API keys are public-safe for client apps)
+Create a `.env` file in the project root (use `.env.example` as template):
+```
+REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+STRIPE_SECRET_KEY=sk_test_your_key_here
+```
+- Firebase config is in `src/firebase.js` (API keys are public-safe for client apps)
+- Stripe publishable key uses `REACT_APP_` prefix (bundled into frontend - this is safe)
+- Stripe secret key does NOT use `REACT_APP_` prefix (server-side only via server.js)
 
 ### Admin Access
 1. Navigate to http://localhost:3000/signup to create admin account
@@ -122,12 +137,16 @@ firebase deploy --only hosting
 - `firebase.json` - Firebase hosting and Firestore config
 - `firestore.rules` - Database security rules
 - `package.json` - Dependencies and scripts
+- `.env` - API keys (gitignored)
+- `.env.example` - Template for environment variables
+- `server.js` - Express backend for Stripe and ShipEngine API calls
 
 ### Key Components
 - `ClothingStore.js` - Main component with shop, cart, and admin views
+- `CompleteCheckout.js` - Multi-step checkout (contact, shipping, payment)
 - `ProductEditor.js` - Product add/edit modal with image upload
 - `AuthContext.js` - Firebase authentication state management
-- `productService.js` - All Firestore CRUD operations
+- `productService.js` - All Firestore CRUD operations (products, orders, about)
 
 ## Recent Updates
 1. Added product description field (optional textarea in admin)
@@ -135,11 +154,31 @@ firebase deploy --only hosting
 3. Made admin table mobile-responsive with text buttons
 4. Added all favicon icons to index.html
 5. Deployed Firestore security rules to prevent unauthorized access
+6. UI/UX improvements based on design review:
+   - Added Google Fonts (Rubik headings, Nunito Sans body)
+   - Improved touch targets (min 44x44px) for mobile accessibility
+   - Added skeleton loading states for better perceived performance
+   - Added lazy loading for images
+   - Added condition badges (emerald=New, amber=Pre-Owned)
+   - Added image hover zoom effects
+   - Added professional footer with quick links
+   - Improved filter button transitions and flex-wrap
+7. Moved Stripe keys to environment variables for security
+8. Pushed code to GitHub repository
+9. Stripe security hardening:
+   - Deleted insecure StripeCheckout.js (was calling Stripe API directly from frontend)
+   - Renamed `REACT_APP_STRIPE_SECRET_KEY` to `STRIPE_SECRET_KEY` (prevents secret key from being bundled into frontend JS)
+   - All Stripe calls now route through server.js backend
+   - Dynamic success/cancel URLs (no more hardcoded localhost)
+10. Migrated orders from localStorage to Firestore (persists across devices, visible in admin)
+11. Migrated About page from localStorage to Firestore
+12. Removed dead localStorage backup for products
+13. Added updateOrder function to productService.js
 
 ## Known Issues / TODO
-- Orders currently save to localStorage (could migrate to Firestore)
-- Stripe checkout integration incomplete
-- About page content also backed up to localStorage
+- Cart still uses localStorage (by design — per-browser, no auth required)
+- Server.js needs to be deployed separately from Firebase Hosting (e.g., Cloud Run, Railway, or Firebase Functions)
+- Stripe webhook for payment confirmation not yet implemented
 
 ## Authentication Users
 - Admin email: cander19@yahoo.com
@@ -151,10 +190,17 @@ firebase deploy --only hosting
 - Gray background (bg-slate-100) for full product images
 - Blue accent color (#2563eb) for buttons and links
 - Products table scrolls horizontally on mobile
+- Typography: Rubik (headings), Nunito Sans (body) via Google Fonts
+- Minimum 44x44px touch targets for accessibility
+- Skeleton loading cards during data fetch
+- Lazy loading images with loading="lazy" attribute
+- Condition badges: emerald for New, amber for Pre-Owned
+- Image hover zoom effect (scale-105 on hover)
 
 ## Git Repository
-Current branch: master
-Firebase project: the-rack-hack
+- **GitHub**: https://github.com/MotownC/TheRackHack
+- **Branch**: master
+- **Firebase project**: the-rack-hack
 
 ## Contact
 Development server accessible on local network for collaborative editing

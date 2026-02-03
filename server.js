@@ -43,7 +43,7 @@ app.post('/api/get-rates', async (req, res) => {
 // --- STRIPE ROUTE ---
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    const SECRET_KEY = process.env.REACT_APP_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+    const SECRET_KEY = process.env.STRIPE_SECRET_KEY;
     
     if (!SECRET_KEY) {
       throw new Error('Stripe Secret Key is missing in .env file');
@@ -90,12 +90,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
       });
     }
 
+    const origin = req.headers.origin || 'http://localhost:3000';
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: line_items,
       mode: 'payment',
-      success_url: 'http://localhost:3000/?success=true',
-      cancel_url: 'http://localhost:3000/?canceled=true',
+      success_url: `${origin}/?success=true`,
+      cancel_url: `${origin}/?canceled=true`,
       customer_email: email,
       metadata: { customer_name: name }
     });

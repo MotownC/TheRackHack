@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Mail } from 'lucide-react';
+import { X, Mail, Send } from 'lucide-react';
 import emailjs from '@emailjs/browser';
+import GlowButton from './GlowButton';
 
 function ContactModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
@@ -123,13 +124,14 @@ function ContactModal({ isOpen, onClose }) {
           )}
 
           {/* Submit Button */}
-          <button
+          <GlowButton
             type="submit"
+            label={status === 'sending' ? 'Sending...' : 'Send Message'}
             disabled={status === 'sending'}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold transition disabled:bg-blue-400 disabled:cursor-not-allowed"
-          >
-            {status === 'sending' ? 'Sending...' : 'Send Message'}
-          </button>
+            icon={Send}
+            showIcon={status !== 'sending'}
+            className="glow-btn-full"
+          />
         </form>
       </div>
     </div>

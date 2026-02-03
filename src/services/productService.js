@@ -81,10 +81,27 @@ export const getAllOrders = async () => {
 
 export const addOrder = async (orderData) => {
   try {
-    const docRef = await addDoc(ordersCollection, orderData);
+    const docRef = await addDoc(ordersCollection, {
+      ...orderData,
+      createdAt: new Date().toISOString()
+    });
     return { id: docRef.id, ...orderData };
   } catch (error) {
     console.error('Error adding order:', error);
+    throw error;
+  }
+};
+
+export const updateOrder = async (orderId, orderData) => {
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      ...orderData,
+      updatedAt: new Date().toISOString()
+    });
+    return { id: orderId, ...orderData };
+  } catch (error) {
+    console.error('Error updating order:', error);
     throw error;
   }
 };
@@ -94,16 +111,13 @@ export const getAboutContent = async () => {
   try {
     const snapshot = await getDocs(aboutCollection);
     if (snapshot.empty) {
-      return { 
-        title: 'Our Story', 
-        content: 'Welcome to The Rack Hack!' 
-      };
+      return null;
     }
     const doc = snapshot.docs[0];
     return { id: doc.id, ...doc.data() };
   } catch (error) {
     console.error('Error getting about content:', error);
-    return { title: '', content: '' };
+    return null;
   }
 };
 

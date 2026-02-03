@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Mail, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, ShoppingBag, Mail, ArrowLeft } from 'lucide-react';
+import { getAboutContent } from '../services/productService';
+import GlowButton from '../components/GlowButton';
 import banner from '../assets/banner.png';
 
 function AboutPage() {
@@ -16,13 +18,13 @@ Every piece in our collection is carefully selected to ensure you get the best v
 Join us in our mission to make fashion accessible, sustainable, and affordable for all.`
   });
 
-  // Load about content from localStorage
+  // Load about content from Firestore
   useEffect(() => {
     const loadAbout = async () => {
       try {
-        const data = localStorage.getItem('aboutContent');
-        if (data) {
-          setAboutContent(JSON.parse(data));
+        const data = await getAboutContent();
+        if (data && data.content) {
+          setAboutContent(data);
         }
       } catch (error) {
         console.error('Error loading about content:', error);
@@ -94,12 +96,11 @@ Join us in our mission to make fashion accessible, sustainable, and affordable f
           </div>
 
           <div className="mt-12 pt-8 border-t border-slate-200">
-            <button
+            <GlowButton
+              label="Start Shopping"
               onClick={() => navigate('/shop')}
-              className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 font-semibold text-lg transition"
-            >
-              Start Shopping
-            </button>
+              icon={ShoppingBag}
+            />
           </div>
         </div>
       </main>

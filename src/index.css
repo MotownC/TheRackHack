@@ -26,3 +26,99 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Glow Button */
+.glow-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.3s ease;
+  box-shadow:
+    0 0 12px rgba(37, 99, 235, 0.3),
+    0 0 24px rgba(79, 70, 229, 0.15);
+}
+
+.glow-btn::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #3b82f6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.glow-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 20px rgba(37, 99, 235, 0.5),
+    0 0 40px rgba(79, 70, 229, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.glow-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.glow-btn:active:not(:disabled),
+.glow-btn[data-state="clicked"] {
+  transform: scale(0.97);
+  box-shadow:
+    0 0 8px rgba(37, 99, 235, 0.4),
+    0 0 16px rgba(79, 70, 229, 0.2);
+}
+
+.glow-btn-disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.glow-btn-disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Full-width variant */
+.glow-btn-full {
+  width: 100%;
+}
+
+/* Filter button - inactive state */
+.glow-filter {
+  padding: 0.5rem 1.25rem;
+  min-height: 44px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #475569;
+  background: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.glow-filter:hover {
+  background: #f1f5f9;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Filter button - active state (glow) */
+.glow-filter-active {
+  padding: 0.5rem 1.25rem;
+  min-height: 44px;
+  font-size: 0.875rem;
+}
