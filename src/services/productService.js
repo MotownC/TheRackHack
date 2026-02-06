@@ -1,11 +1,12 @@
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  collection,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   doc,
-  setDoc 
+  setDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -62,6 +63,20 @@ export const deleteProduct = async (productId) => {
   } catch (error) {
     console.error('Error deleting product:', error);
     throw error;
+  }
+};
+
+export const getProductById = async (productId) => {
+  try {
+    const productRef = doc(db, 'products', productId);
+    const snapshot = await getDoc(productRef);
+    if (snapshot.exists()) {
+      return { id: snapshot.id, ...snapshot.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting product:', error);
+    return null;
   }
 };
 

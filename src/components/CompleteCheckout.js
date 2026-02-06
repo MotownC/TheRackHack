@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, MapPin, CreditCard, Package, Truck, AlertCircle, Loader, Lock } from 'lucide-react';
 
-function CompleteCheckout({ cart = [], onUpdateCart }) {
+// API URL from environment variable (defaults to localhost for development)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComplete }) {
   const [step, setStep] = useState(1);
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
@@ -99,8 +102,8 @@ function CompleteCheckout({ cart = [], onUpdateCart }) {
         }
       };
 
-      // CHANGE 1: URL points to YOUR backend (port 3001)
-      const response = await fetch('http://localhost:3001/api/get-rates', {
+      // URL points to backend server (from environment variable)
+      const response = await fetch(`${API_URL}/api/get-rates`, {
         method: 'POST',
         headers: {
           // CHANGE 2: No API Key here! just content type
@@ -196,9 +199,8 @@ function CompleteCheckout({ cart = [], onUpdateCart }) {
     setPaymentError('');
 
     try {
-      // We now send the raw cart data to YOUR backend
-      // The backend will handle the math and the Secret Key
-      const response = await fetch('http://localhost:3001/api/create-checkout-session', {
+      // Send cart data to backend server for Stripe session creation
+      const response = await fetch(`${API_URL}/api/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,7 +211,14 @@ function CompleteCheckout({ cart = [], onUpdateCart }) {
           name: checkoutForm.name,
           shippingCost: shippingCost,
           shippingService: selectedShipping?.service,
-          taxAmount: tax
+          taxAmount: tax,
+          shippingAddress: {
+            address: checkoutForm.address,
+            city: checkoutForm.city,
+            state: checkoutForm.state,
+            zipCode: checkoutForm.zipCode,
+            phone: checkoutForm.phone
+          }
         }),
       });
 
@@ -565,7 +574,7 @@ function CompleteCheckout({ cart = [], onUpdateCart }) {
                   <span>{selectedShipping ? `$${shippingCost.toFixed(2)}` : 'TBD'}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Tax (6%)</span>
+                  <span>Sales Tax (MI 6%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className="border-t pt-2 flex justify-between text-lg font-bold text-slate-800">

@@ -20,14 +20,16 @@ src/
 │   ├── CloudinaryUpload.js # Image upload component
 │   ├── ContactModal.js  # Contact form modal
 │   ├── ProtectedRoute.js # Auth-protected routes
-│   └── CompleteCheckout.js # Full checkout form with shipping & Stripe payment
+│   ├── CompleteCheckout.js # Full checkout form with shipping & Stripe payment
+│   └── GlowButton.js    # Animated glow button component
 ├── contexts/
 │   └── AuthContext.js   # Firebase authentication context
 ├── pages/              # Page components
 │   ├── AboutPage.js    # About page
 │   ├── ItemDetail.js   # Individual product page
 │   ├── ShopPage.js     # Main shop listing
-│   └── CheckoutPage.js # Checkout page with cart summary
+│   ├── CheckoutPage.js # Checkout page with cart summary
+│   └── OrderSuccessPage.js # Post-payment confirmation page
 ├── services/
 │   └── productService.js # Firebase Firestore operations
 ├── assets/             # Images and static files
@@ -109,10 +111,14 @@ Create a `.env` file in the project root (use `.env.example` as template):
 ```
 REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
 STRIPE_SECRET_KEY=sk_test_your_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+REACT_APP_API_URL=http://localhost:3001
+SHIPENGINE_API_KEY=your_shipengine_api_key_here
 ```
 - Firebase config is in `src/firebase.js` (API keys are public-safe for client apps)
 - Stripe publishable key uses `REACT_APP_` prefix (bundled into frontend - this is safe)
 - Stripe secret key does NOT use `REACT_APP_` prefix (server-side only via server.js)
+- `REACT_APP_API_URL` points to the backend server (localhost for dev, production URL for live)
 
 ### Admin Access
 1. Navigate to http://localhost:3000/signup to create admin account
@@ -121,11 +127,39 @@ STRIPE_SECRET_KEY=sk_test_your_key_here
 
 ## Deployment
 
-### Firebase Hosting
+### Frontend (Firebase Hosting)
 ```bash
 npm run build
 firebase deploy --only hosting
 ```
+
+### Backend (server.js)
+The Express backend must be deployed separately. Options:
+
+**Option 1: Railway (Recommended for simplicity)**
+1. Push to GitHub
+2. Connect Railway to your repo
+3. Set environment variables in Railway dashboard
+4. Railway auto-deploys on push
+
+**Option 2: Vercel**
+1. Create `vercel.json` with Node.js config
+2. Deploy via Vercel CLI or GitHub integration
+
+**Option 3: Google Cloud Run**
+1. Create Dockerfile
+2. Build and push container
+3. Deploy to Cloud Run
+
+After deploying backend:
+1. Update `REACT_APP_API_URL` in `.env` to production URL
+2. Rebuild and redeploy frontend
+
+### Stripe Webhook Setup
+1. Go to Stripe Dashboard > Developers > Webhooks
+2. Add endpoint: `https://your-backend-url/webhook/stripe`
+3. Select event: `checkout.session.completed`
+4. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
 
 ### Custom Domain
 - Domain: therackhack.com (GoDaddy)
@@ -174,11 +208,29 @@ firebase deploy --only hosting
 11. Migrated About page from localStorage to Firestore
 12. Removed dead localStorage backup for products
 13. Added updateOrder function to productService.js
+14. Added GlowButton component with gradient/glow effect for action buttons
+15. Production readiness improvements:
+    - Added Stripe webhook endpoint for payment verification
+    - Created OrderSuccessPage for post-payment confirmation
+    - Orders now created in Firestore after successful Stripe payment
+    - Inventory automatically decremented after purchase
+    - Added getProductById function to productService.js
+    - Environment variables for API URL (no more hardcoded localhost)
+    - CORS restricted to allowed domains
+    - Full order metadata passed to Stripe for webhook processing
 
 ## Known Issues / TODO
 - Cart still uses localStorage (by design — per-browser, no auth required)
-- Server.js needs to be deployed separately from Firebase Hosting (e.g., Cloud Run, Railway, or Firebase Functions)
-- Stripe webhook for payment confirmation not yet implemented
+- Server.js needs to be deployed separately from Firebase Hosting (see Deployment section)
+
+## Production Checklist
+Before going live:
+1. [ ] Switch Stripe keys from `pk_test_`/`sk_test_` to `pk_live_`/`sk_live_`
+2. [ ] Deploy server.js to production (Railway, Vercel, or Cloud Run)
+3. [ ] Update `REACT_APP_API_URL` to production backend URL
+4. [ ] Set up Stripe webhook endpoint and configure `STRIPE_WEBHOOK_SECRET`
+5. [ ] Test complete checkout flow end-to-end
+6. [ ] Verify ShipEngine API key is set in production environment
 
 ## Authentication Users
 - Admin email: cander19@yahoo.com

@@ -10,6 +10,7 @@ import ItemDetail from './pages/ItemDetail';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import CheckoutPage from './pages/CheckoutPage';
+import OrderSuccessPage from './pages/OrderSuccessPage';
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           <Route path="/cart" element={<ClothingStore initialView="cart" />} />
           <Route path="/item/:id" element={<ItemDetail />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
         </Routes>
       </AuthProvider>
     </Router>
