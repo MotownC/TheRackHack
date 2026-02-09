@@ -6,14 +6,12 @@ import ProductEditor from './components/ProductEditor';
 import GlowButton from './components/GlowButton';
 import banner from './assets/banner.png';
 import logo from './assets/logo.png';
-import { 
-  getAllProducts, 
-  addProduct, 
-  updateProduct, 
+import {
+  getAllProducts,
+  addProduct,
+  updateProduct,
   deleteProduct,
   getAllOrders,
-  addOrder,
-  updateOrder,
   getAboutContent,
   saveAboutContent
 } from './services/productService';
@@ -66,9 +64,6 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   const [aboutContent, setAboutContent] = useState({ title: '', content: '' });
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [checkoutForm, setCheckoutForm] = useState({
-    name: '', email: '', address: '', city: '', state: '', zip: ''
-  });
 
  // Load data from Firebase on mount
   useEffect(() => {
@@ -172,52 +167,6 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       }
       return item;
     }).filter(Boolean));
-  };
-
-  const completeOrder = async () => {
-    if (!checkoutForm.name || !checkoutForm.email) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    const orderData = {
-      date: new Date().toISOString(),
-      customer: checkoutForm,
-      items: cart,
-      total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-      status: 'Pending Payment'
-    };
-
-    try {
-      // Save order to Firestore
-      const savedOrder = await addOrder(orderData);
-      setOrders([...orders, savedOrder]);
-
-      // Update inventory in Firestore
-      for (const cartItem of cart) {
-        const product = products.find(p => p.id === cartItem.id);
-        if (product) {
-          await updateProduct(product.id, { stock: product.stock - cartItem.quantity });
-        }
-      }
-
-      // Update local product state
-      setProducts(products.map(product => {
-        const cartItem = cart.find(item => item.id === product.id);
-        if (cartItem) {
-          return { ...product, stock: product.stock - cartItem.quantity };
-        }
-        return product;
-      }));
-
-      setCart([]);
-      setCheckoutForm({ name: '', email: '', address: '', city: '', state: '', zip: '' });
-      setView('shop');
-      alert('Order placed! You will receive payment instructions via email.');
-    } catch (error) {
-      console.error('Error saving order:', error);
-      alert('Failed to place order. Please try again.');
-    }
   };
 
   const handleSaveProduct = async (productData) => {

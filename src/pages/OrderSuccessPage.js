@@ -16,16 +16,6 @@ function OrderSuccessPage() {
   const [orderDetails, setOrderDetails] = useState(null);
   const [orderSaved, setOrderSaved] = useState(false);
 
-  useEffect(() => {
-    if (!sessionId) {
-      setError('No session ID provided');
-      setLoading(false);
-      return;
-    }
-
-    verifyAndSaveOrder();
-  }, [sessionId]);
-
   const verifyAndSaveOrder = async () => {
     try {
       // 1. Verify the Stripe session
@@ -116,6 +106,17 @@ function OrderSuccessPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!sessionId) {
+      setError('No session ID provided');
+      setLoading(false);
+      return;
+    }
+
+    verifyAndSaveOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   if (loading) {
     return (

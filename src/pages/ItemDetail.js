@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { getAllProducts } from '../services/productService';
+import { getProductById } from '../services/productService';
 
 function ItemDetail() {
   const { id } = useParams();
@@ -16,9 +16,7 @@ function ItemDetail() {
     const loadProduct = async () => {
       try {
         setLoading(true);
-        const products = await getAllProducts();
-        // Handle string vs number ID comparison safely
-        const foundProduct = products.find(p => p.id == id);
+        const foundProduct = await getProductById(id);
         setProduct(foundProduct);
       } catch (error) {
         console.error('Error loading product:', error);

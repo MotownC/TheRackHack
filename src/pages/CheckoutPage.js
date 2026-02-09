@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Mail } from 'lucide-react'; // Import icons
+import { ShoppingCart } from 'lucide-react';
 import CompleteCheckout from '../components/CompleteCheckout';
 import banner from '../assets/banner.png'; // Make sure path matches your folder structure
 
@@ -52,17 +52,10 @@ function CheckoutPage() {
               Home
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/shop')}
               className="font-medium text-slate-600 hover:text-slate-800"
             >
               Shop
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="font-medium text-slate-600 hover:text-slate-800 flex items-center gap-1"
-            >
-              <Mail className="w-5 h-5" />
-              Contact
             </button>
             <button className="relative cursor-default">
               <ShoppingCart className="w-6 h-6 text-slate-600" />
@@ -78,10 +71,24 @@ function CheckoutPage() {
       {/* --- HEADER END --- */}
 
       {/* The Actual Checkout Form */}
-      <CompleteCheckout 
-        cart={cart} 
-        onUpdateCart={handleUpdateCart} 
-      />
+      {cart.length === 0 ? (
+        <div className="max-w-lg mx-auto px-4 py-12 text-center">
+          <ShoppingCart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Your cart is empty</h2>
+          <p className="text-slate-600 mb-6">Add some items before checking out.</p>
+          <button
+            onClick={() => navigate('/shop')}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition"
+          >
+            Browse Shop
+          </button>
+        </div>
+      ) : (
+        <CompleteCheckout
+          cart={cart}
+          onUpdateCart={handleUpdateCart}
+        />
+      )}
     </div>
   );
 }

@@ -32,7 +32,9 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shippingCost = selectedShipping?.rate || 0;
-  const tax = (subtotal + shippingCost) * 0.06;
+  // Only charge MI 6% sales tax for Michigan shipping addresses
+  const isMichigan = checkoutForm.state.toUpperCase() === 'MI';
+  const tax = isMichigan ? (subtotal + shippingCost) * 0.06 : 0;
   const total = subtotal + shippingCost + tax;
 
   // Calculate package weight (1 lb per item, adjust as needed)
@@ -42,12 +44,13 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
     return Math.max(1, totalWeight);
   };
 
-  // Fetch shipping rates when ZIP is entered
+  // Fetch shipping rates when address is complete
   useEffect(() => {
-    if (checkoutForm.zipCode && checkoutForm.zipCode.length === 5) {
+    if (checkoutForm.zipCode && checkoutForm.zipCode.length === 5 &&
+        checkoutForm.city && checkoutForm.state && checkoutForm.address) {
       fetchShippingRates();
     }
-  }, [checkoutForm.zipCode]);
+  }, [checkoutForm.zipCode, checkoutForm.city, checkoutForm.state, checkoutForm.address]);
 
   const fetchShippingRates = async () => {
     setLoadingShipping(true);
@@ -574,7 +577,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                   <span>{selectedShipping ? `$${shippingCost.toFixed(2)}` : 'TBD'}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Sales Tax (MI 6%)</span>
+                  <span>{isMichigan ? 'Sales Tax (MI 6%)' : 'Sales Tax'}</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className="border-t pt-2 flex justify-between text-lg font-bold text-slate-800">

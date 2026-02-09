@@ -178,13 +178,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
         shipping_service: shippingService || '',
         shipping_cost: String(shippingCost || 0),
         tax_amount: String(taxAmount || 0),
+        // Stripe metadata values limited to 500 chars - store only IDs and quantities
         cart_items: JSON.stringify(cart.map(item => ({
           id: item.id,
-          name: item.name,
+          name: item.name.substring(0, 30),
           size: item.size,
           price: item.price,
           quantity: item.quantity
-        })))
+        }))).substring(0, 500)
       }
     });
     
