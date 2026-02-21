@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Sparkles } from 'lucide-react';
 import CloudinaryUpload from './CloudinaryUpload';
+import GlamourGenerator from './GlamourGenerator';
 
 function ProductEditor({ product, onSave, onCancel }) {
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ function ProductEditor({ product, onSave, onCancel }) {
     image2: product?.image2 || '',
     image3: product?.image3 || ''
   });
+
+  const [glamourSlot, setGlamourSlot] = useState(null);
 
   const handleImageUpload = (imageUrl, imageNumber) => {
     const imageKey = imageNumber === 1 ? 'image' : `image${imageNumber}`;
@@ -47,10 +50,20 @@ function ProductEditor({ product, onSave, onCancel }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Image 1 Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Product Image 1 (Main) *
-            </label>
-            <CloudinaryUpload 
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Product Image 1 (Main) *
+              </label>
+              <button
+                type="button"
+                onClick={() => setGlamourSlot(1)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                AI Generate
+              </button>
+            </div>
+            <CloudinaryUpload
               currentImage={formData.image}
               onUploadSuccess={(url) => handleImageUpload(url, 1)}
             />
@@ -68,10 +81,20 @@ function ProductEditor({ product, onSave, onCancel }) {
 
           {/* Image 2 Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Product Image 2 (Optional)
-            </label>
-            <CloudinaryUpload 
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Product Image 2 (Optional)
+              </label>
+              <button
+                type="button"
+                onClick={() => setGlamourSlot(2)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                AI Generate
+              </button>
+            </div>
+            <CloudinaryUpload
               currentImage={formData.image2}
               onUploadSuccess={(url) => handleImageUpload(url, 2)}
             />
@@ -89,10 +112,20 @@ function ProductEditor({ product, onSave, onCancel }) {
 
           {/* Image 3 Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Product Image 3 (Optional)
-            </label>
-            <CloudinaryUpload 
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Product Image 3 (Optional)
+              </label>
+              <button
+                type="button"
+                onClick={() => setGlamourSlot(3)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                AI Generate
+              </button>
+            </div>
+            <CloudinaryUpload
               currentImage={formData.image3}
               onUploadSuccess={(url) => handleImageUpload(url, 3)}
             />
@@ -107,6 +140,19 @@ function ProductEditor({ product, onSave, onCancel }) {
               className="w-full px-3 py-2 border rounded-lg mt-2 text-sm"
             />
           </div>
+
+          {/* Glamour Generator Modal */}
+          {glamourSlot && (
+            <GlamourGenerator
+              currentImage={
+                glamourSlot === 1 ? formData.image :
+                glamourSlot === 2 ? formData.image2 :
+                formData.image3
+              }
+              onImageGenerated={(url) => handleImageUpload(url, glamourSlot)}
+              onClose={() => setGlamourSlot(null)}
+            />
+          )}
 
           {/* Product Name */}
           <div>

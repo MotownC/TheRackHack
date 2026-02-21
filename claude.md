@@ -8,6 +8,7 @@ The Rack Hack is a React-based e-commerce website for selling pre-owned and new 
 - **Backend**: Firebase (Firestore, Authentication, Hosting)
 - **Icons**: Lucide React
 - **Image Upload**: Cloudinary
+- **AI Image Generation**: Gemini 3 Pro (via server.js backend → Cloudinary)
 - **Payment**: Stripe Checkout (via server.js backend)
 - **Shipping**: ShipEngine API (USPS rates via server.js backend)
 - **Typography**: Google Fonts (Rubik for headings, Nunito Sans for body)
@@ -18,6 +19,7 @@ src/
 ├── components/           # Reusable UI components
 │   ├── ProductEditor.js # Modal for adding/editing products
 │   ├── CloudinaryUpload.js # Image upload component
+│   ├── GlamourGenerator.js # AI glamour photo generation modal
 │   ├── ContactModal.js  # Contact form modal
 │   ├── ProtectedRoute.js # Auth-protected routes
 │   ├── CompleteCheckout.js # Full checkout form with shipping & Stripe payment
@@ -64,6 +66,7 @@ public/
   - Gender (Men's, Women's, Kids)
   - Condition (New, Pre-Owned)
   - Up to 3 images (Cloudinary upload or URL)
+  - AI Glamour Photo generation (Gemini → Cloudinary) per image slot
 - Edit existing products
 - Delete products
 - View orders
@@ -114,6 +117,10 @@ STRIPE_SECRET_KEY=sk_test_your_key_here
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 REACT_APP_API_URL=http://localhost:3001
 SHIPENGINE_API_KEY=your_shipengine_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+CLOUDINARY_CLOUD_NAME=dd2zdrc2z
+CLOUDINARY_API_KEY=your_cloudinary_api_key_here
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret_here
 ```
 - Firebase config is in `src/firebase.js` (API keys are public-safe for client apps)
 - Stripe publishable key uses `REACT_APP_` prefix (bundled into frontend - this is safe)
@@ -181,6 +188,7 @@ After deploying backend:
 - `ProductEditor.js` - Product add/edit modal with image upload
 - `AuthContext.js` - Firebase authentication state management
 - `productService.js` - All Firestore CRUD operations (products, orders, about)
+- `GlamourGenerator.js` - AI glamour photo generation modal (Gemini 3 Pro)
 
 ## Recent Updates
 1. Added product description field (optional textarea in admin)
@@ -218,6 +226,14 @@ After deploying backend:
     - Environment variables for API URL (no more hardcoded localhost)
     - CORS restricted to allowed domains
     - Full order metadata passed to Stripe for webhook processing
+
+16. AI Glamour Photo Generation:
+    - Integrated Google AI Studio app (Gemini 3 Pro) into admin ProductEditor
+    - New `/api/generate-glamour` endpoint in server.js (Gemini API → Cloudinary upload)
+    - GlamourGenerator.js component with mode, model type, lighting, and custom prompt controls
+    - "AI Generate" button on each image slot in ProductEditor
+    - Generated images auto-uploaded to Cloudinary and populated into product image fields
+    - Source app exported from Google AI Studio in `glamour-app/` directory
 
 ## Known Issues / TODO
 - Cart still uses localStorage (by design — per-browser, no auth required)
