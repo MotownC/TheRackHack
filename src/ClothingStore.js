@@ -264,6 +264,12 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                   Dashboard
                 </button>
                 <button
+                  onClick={() => { setView('shop'); navigate('/'); }}
+                  className="font-medium text-slate-600 hover:text-slate-800"
+                >
+                  Shop
+                </button>
+                <button
                   onClick={handleLogout}
                   className="font-medium text-slate-600 hover:text-slate-800 flex items-center gap-1"
                 >

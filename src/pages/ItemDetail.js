@@ -5,12 +5,13 @@ import { getProductById } from '../services/productService';
 function ItemDetail() {
   const { id } = useParams();
   const location = useLocation();
-  
+
   // 1. Capture the filters passed from the Shop Page
   const returnState = location.state || {};
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -124,8 +125,10 @@ function ItemDetail() {
                       key={index}
                       src={img}
                       alt={`${product.name} - ${index + 1}`}
-                      className="w-full rounded-lg"
+                      className="w-full rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                       loading="lazy"
+                      onClick={() => setFullscreenImage(img)}
+                      title="Click to view fullscreen"
                     />
                   ))
                 ) : (
@@ -183,6 +186,18 @@ function ItemDetail() {
           </div>
         </div>
       </div>
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-[100] flex items-center justify-center cursor-pointer"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <img
+            src={fullscreenImage}
+            alt="Fullscreen view"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }

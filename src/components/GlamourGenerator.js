@@ -13,6 +13,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
   const [generatedUrl, setGeneratedUrl] = useState(null);
   const [error, setError] = useState(null);
   const [useExisting, setUseExisting] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -115,7 +116,9 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                 <img
                   src={useExisting ? currentImage : `data:${sourceImage.mimeType};base64,${sourceImage.data}`}
                   alt="Source"
-                  className="w-full h-48 object-contain bg-slate-100 rounded-lg"
+                  className="w-full h-48 object-contain bg-slate-100 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setFullscreenImage(useExisting ? currentImage : `data:${sourceImage.mimeType};base64,${sourceImage.data}`)}
+                  title="Click to view fullscreen"
                 />
                 <button
                   onClick={() => { setSourceImage(null); setUseExisting(false); }}
@@ -270,7 +273,9 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
               <img
                 src={generatedUrl}
                 alt="Generated glamour"
-                className="w-full h-64 object-contain bg-slate-100 rounded-lg"
+                className="w-full h-64 object-contain bg-slate-100 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setFullscreenImage(generatedUrl)}
+                title="Click to view fullscreen"
               />
             </div>
           )}
@@ -326,6 +331,19 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
           </div>
         </div>
       </div>
+
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-[200] flex items-center justify-center cursor-pointer"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <img
+            src={fullscreenImage}
+            alt="Fullscreen view"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }

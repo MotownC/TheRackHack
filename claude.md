@@ -234,6 +234,12 @@ After deploying backend:
     - "AI Generate" button on each image slot in ProductEditor
     - Generated images auto-uploaded to Cloudinary and populated into product image fields
     - Source app exported from Google AI Studio in `glamour-app/` directory
+17. Fullscreen image lightbox:
+    - Click any image in ItemDetail (product page) to view fullscreen, click again to dismiss
+    - Click image thumbnails in admin CloudinaryUpload to view fullscreen
+    - Click source image or generated result in GlamourGenerator to view fullscreen
+    - Uses fixed overlay with z-[100] (product/admin) or z-[200] (GlamourGenerator, above its modal)
+18. Admin navbar now includes "Shop" link to navigate back to the storefront
 
 ## Known Issues / TODO
 - Cart still uses localStorage (by design — per-browser, no auth required)
@@ -264,6 +270,7 @@ Before going live:
 - Lazy loading images with loading="lazy" attribute
 - Condition badges: emerald for New, amber for Pre-Owned
 - Image hover zoom effect (scale-105 on hover)
+- Fullscreen image lightbox on click (product detail page, admin image uploads, AI generator)
 
 ## Git Repository
 - **GitHub**: https://github.com/MotownC/TheRackHack

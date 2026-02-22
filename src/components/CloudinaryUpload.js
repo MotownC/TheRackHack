@@ -9,6 +9,7 @@ function CloudinaryUpload({ onUploadSuccess, currentImage }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -70,14 +71,29 @@ function CloudinaryUpload({ onUploadSuccess, currentImage }) {
     <div className="space-y-3">
       {currentImage && (
         <div className="flex items-center gap-4">
-          <img 
-            src={currentImage} 
-            alt="Current" 
-            className="w-32 h-32 object-cover rounded-lg border"
+          <img
+            src={currentImage}
+            alt="Current"
+            className="w-32 h-32 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setFullscreen(true)}
+            title="Click to view fullscreen"
           />
           <div className="text-sm text-slate-600">
             Current image
           </div>
+        </div>
+      )}
+
+      {fullscreen && currentImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-[100] flex items-center justify-center cursor-pointer"
+          onClick={() => setFullscreen(false)}
+        >
+          <img
+            src={currentImage}
+            alt="Fullscreen view"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+          />
         </div>
       )}
       
