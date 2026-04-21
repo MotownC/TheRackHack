@@ -99,10 +99,10 @@ function CloudinaryUpload({ onUploadSuccess, currentImage }) {
       
       <label className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg transition ${
         uploading 
-          ? 'border-blue-400 bg-blue-50 cursor-not-allowed' 
-          : 'border-slate-300 bg-slate-50 cursor-pointer hover:border-blue-500'
+          ? 'border-rose-400 bg-rose-50 cursor-not-allowed' 
+          : 'border-slate-300 bg-slate-50 cursor-pointer hover:border-rose-600'
       }`}>
-        <Upload className={`w-5 h-5 ${uploading ? 'text-blue-500 animate-pulse' : 'text-slate-500'}`} />
+        <Upload className={`w-5 h-5 ${uploading ? 'text-rose-600 animate-pulse' : 'text-slate-500'}`} />
         <span className="text-sm text-slate-600 font-medium">
           {uploading ? 'Uploading...' : currentImage ? 'Change Image' : 'Upload Image'}
         </span>
@@ -119,7 +119,7 @@ function CloudinaryUpload({ onUploadSuccess, currentImage }) {
         <div className="space-y-1">
           <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-rose-700 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

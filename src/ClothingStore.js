@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Trash2, Plus, Minus, Package, TrendingUp, Mail, Edit, PlusCircle, LogOut, Lock } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, Package, TrendingUp, Mail, Edit, PlusCircle, LogOut, Lock, Search } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom'; 
 import ContactModal from './components/ContactModal';
 import ProductEditor from './components/ProductEditor';
 import GlowButton from './components/GlowButton';
+import { ToastContainer, useToast } from './components/Toast';
 import banner from './assets/banner.png';
 import logo from './assets/logo.png';
 import {
@@ -64,6 +65,9 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   const [aboutContent, setAboutContent] = useState({ title: '', content: '' });
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('default');
+  const { toasts, showToast, dismissToast } = useToast();
 
  // Load data from Firebase on mount
   useEffect(() => {
@@ -146,9 +150,11 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
         setCart(cart.map(item =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         ));
+        showToast(`${product.name} added to cart`);
       }
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
+      showToast(`${product.name} added to cart`);
     }
   };
 
@@ -241,11 +247,20 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   );
 
   // Filter products by gender and condition
-  const filteredProducts = products.filter(p => {
-    const matchesGender = genderFilter === 'all' || p.gender === genderFilter;
-    const matchesCondition = conditionFilter === 'all' || p.condition === conditionFilter;
-    return matchesGender && matchesCondition;
-  });
+  const filteredProducts = products
+    .filter(p => {
+      const matchesGender = genderFilter === 'all' || p.gender === genderFilter;
+      const matchesCondition = conditionFilter === 'all' || p.condition === conditionFilter;
+      const matchesSearch = searchQuery.trim() === '' ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesGender && matchesCondition && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'price-asc') return a.price - b.price;
+      if (sortOrder === 'price-desc') return b.price - a.price;
+      return 0;
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -259,7 +274,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
               <>
                 <button
                   onClick={() => setView('admin')}
-                  className="font-medium text-blue-600"
+                  className="font-medium text-rose-700"
                 >
                   Dashboard
                 </button>
@@ -288,7 +303,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 </button>
                 <button
                   onClick={() => setView('shop')}
-                  className={`font-medium ${view === 'shop' ? 'text-blue-600' : 'text-slate-600 hover:text-slate-800'}`}
+                  className={`font-medium ${view === 'shop' ? 'text-rose-700' : 'text-slate-600 hover:text-slate-800'}`}
                 >
                   Shop
                 </button>
@@ -305,7 +320,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 >
                   <ShoppingCart className="w-6 h-6 text-slate-600" />
                   {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-rose-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {cartCount}
                     </span>
                   )}
@@ -322,7 +337,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
         {loading && products.length > 0 && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-700"></div>
               <span className="text-lg font-semibold">Saving...</span>
             </div>
           </div>
@@ -354,7 +369,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             </div>
 
             {/* Condition Filter Buttons */}
-            <div className="mb-8">
+            <div className="mb-6">
               <h3 className="text-sm font-semibold text-slate-600 mb-2">CONDITION</h3>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {[
@@ -371,6 +386,29 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Search + Sort Row */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-8">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <input
+                  type="search"
+                  placeholder="Search products…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent"
+                />
+              </div>
+              <select
+                value={sortOrder}
+                onChange={e => setSortOrder(e.target.value)}
+                className="sm:w-48 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent cursor-pointer"
+              >
+                <option value="default">Sort: Default</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -392,6 +430,18 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                     </div>
                   ))}
                 </>
+              )}
+              {!loading && filteredProducts.length === 0 && products.length > 0 && (
+                <div className="col-span-full py-16 text-center">
+                  <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500 text-lg font-medium">No products match your search</p>
+                  <button
+                    onClick={() => { setSearchQuery(''); setGenderFilter('all'); setConditionFilter('all'); }}
+                    className="mt-3 text-rose-700 hover:text-rose-800 text-sm font-medium"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
               )}
               {filteredProducts.map(product => (
                 <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer group">
@@ -418,14 +468,18 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           savedGender: genderFilter,
           savedCondition: conditionFilter
         }}>
-                      <h3 className="font-semibold text-slate-800 mb-1 hover:text-blue-600 cursor-pointer">{product.name}</h3>
+                      <h3 className="font-semibold text-slate-800 mb-1 hover:text-rose-700 cursor-pointer">{product.name}</h3>
                     </Link>
                     <p className="text-sm text-slate-600 mb-2">Size: {product.size}</p>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xl font-bold text-blue-600">${product.price.toFixed(2)}</span>
-                      <span className="text-sm text-slate-500">
-                        {product.stock} in stock
-                      </span>
+                      <span className="text-xl font-bold text-rose-700">${product.price.toFixed(2)}</span>
+                      {product.stock === 0 ? (
+                        <span className="text-sm font-medium text-red-500">Out of stock</span>
+                      ) : product.stock <= 3 ? (
+                        <span className="text-sm font-medium text-amber-600">Only {product.stock} left!</span>
+                      ) : (
+                        <span className="text-sm text-slate-500">{product.stock} in stock</span>
+                      )}
                     </div>
                     <GlowButton
                       label={product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
@@ -464,7 +518,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{item.name}</h3>
                         <p className="text-sm text-slate-600">Size: {item.size}</p>
-                        <p className="text-lg font-bold text-blue-600 mt-1">${item.price.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-rose-700 mt-1">${item.price.toFixed(2)}</p>
                       </div>
                       <div className="flex flex-col items-end justify-between">
                         <button
@@ -531,7 +585,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
               <h2 className="text-3xl font-bold text-slate-800">Admin Dashboard</h2>
               <button
                 onClick={() => setIsAddingProduct(true)}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold flex items-center gap-2"
+                className="bg-rose-700 text-white px-6 py-3 rounded-lg hover:bg-rose-800 font-semibold flex items-center gap-2"
               >
                 <PlusCircle className="w-5 h-5" />
                 Add New Product
@@ -544,9 +598,9 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-600 text-sm">Total Orders</p>
-                    <p className="text-3xl font-bold text-blue-600">{orders.length}</p>
+                    <p className="text-3xl font-bold text-rose-700">{orders.length}</p>
                   </div>
-                  <Package className="w-12 h-12 text-blue-600" />
+                  <Package className="w-12 h-12 text-rose-700" />
                 </div>
               </div>
               <div className="bg-white rounded-lg shadow-md p-6">
@@ -598,7 +652,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                           <div className="flex gap-2">
                             <button
                               onClick={() => setEditingProduct(product)}
-                              className="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-600 rounded hover:bg-blue-50 text-sm font-medium"
+                              className="text-rose-700 hover:text-rose-900 px-3 py-1 border border-rose-700 rounded hover:bg-rose-50 text-sm font-medium"
                             >
                               Edit
                             </button>
@@ -624,7 +678,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 {!isEditingAbout && (
                   <button
                     onClick={() => setIsEditingAbout(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold flex items-center gap-2"
+                    className="bg-rose-700 text-white px-4 py-2 rounded-lg hover:bg-rose-800 font-semibold flex items-center gap-2"
                   >
                     <Edit className="w-4 h-4" />
                     Edit Content
@@ -811,6 +865,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           }}
         />
       )}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

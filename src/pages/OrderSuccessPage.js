@@ -122,7 +122,7 @@ function OrderSuccessPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <Loader className="w-12 h-12 animate-spin text-rose-700 mx-auto mb-4" />
           <p className="text-slate-600 text-lg">Confirming your order...</p>
         </div>
       </div>
@@ -154,7 +154,7 @@ function OrderSuccessPage() {
             </p>
             <button
               onClick={() => navigate('/shop')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition"
+              className="bg-rose-700 text-white px-6 py-3 rounded-lg hover:bg-rose-800 font-semibold transition"
             >
               Continue Shopping
             </button>
@@ -192,11 +192,11 @@ function OrderSuccessPage() {
           {orderDetails && (
             <div className="space-y-6">
               {/* Confirmation Email Notice */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-start gap-3">
+                <Mail className="w-5 h-5 text-rose-700 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-blue-800 font-medium">Confirmation sent to:</p>
-                  <p className="text-blue-700">{orderDetails.email}</p>
+                  <p className="text-rose-900 font-medium">Confirmation sent to:</p>
+                  <p className="text-rose-800">{orderDetails.email}</p>
                 </div>
               </div>
 
@@ -255,7 +255,7 @@ function OrderSuccessPage() {
               {/* Continue Shopping */}
               <button
                 onClick={() => navigate('/shop')}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold transition flex items-center justify-center gap-2"
+                className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition flex items-center justify-center gap-2"
               >
                 Continue Shopping
                 <ArrowRight className="w-5 h-5" />

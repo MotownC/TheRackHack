@@ -26,6 +26,40 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState('');
 
+  // Inline validation
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'name':
+        return value.trim() ? '' : 'Full name is required';
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? '' : 'Enter a valid email address';
+      case 'phone':
+        if (!value.trim()) return 'Phone number is required';
+        return value.replace(/\D/g, '').length >= 10 ? '' : 'Enter a valid phone number';
+      case 'address':
+        return value.trim() ? '' : 'Street address is required';
+      case 'city':
+        return value.trim() ? '' : 'City is required';
+      case 'state':
+        if (!value.trim()) return 'State is required';
+        return /^[A-Z]{2}$/.test(value) ? '' : 'Enter a 2-letter state code (e.g. MI)';
+      case 'zipCode':
+        if (!value.trim()) return 'ZIP code is required';
+        return /^\d{5}$/.test(value) ? '' : 'Enter a valid 5-digit ZIP code';
+      default:
+        return '';
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setFieldErrors(prev => ({ ...prev, [name]: error }));
+  };
+
  // Configuration
   const ORIGIN_ZIP = '48347'; // Clarkston, MI
 
@@ -245,6 +279,9 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setCheckoutForm({ ...checkoutForm, [name]: value });
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const canProceedToShipping = () => {
@@ -274,9 +311,9 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
               { num: 3, label: 'Payment', icon: CreditCard }
             ].map(({ num, label, icon: Icon }) => (
               <div key={num} className="flex items-center gap-2">
-                <div className={`flex items-center gap-2 ${step >= num ? 'text-blue-600' : 'text-slate-400'}`}>
+                <div className={`flex items-center gap-2 ${step >= num ? 'text-rose-700' : 'text-slate-400'}`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                    step >= num ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
+                    step >= num ? 'bg-rose-700 text-white' : 'bg-slate-200 text-slate-500'
                   }`}>
                     {step > num ? '✓' : num}
                   </div>
@@ -308,10 +345,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                         name="name"
                         value={checkoutForm.name}
                         onChange={handleFormChange}
+                        onBlur={handleBlur}
                         disabled={step > 1}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 ${fieldErrors.name ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                         placeholder="John Doe"
                       />
+                      {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
@@ -320,10 +359,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                         name="email"
                         value={checkoutForm.email}
                         onChange={handleFormChange}
+                        onBlur={handleBlur}
                         disabled={step > 1}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 ${fieldErrors.email ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                         placeholder="john@example.com"
                       />
+                      {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
                     </div>
                   </div>
 
@@ -334,10 +375,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                       name="phone"
                       value={checkoutForm.phone}
                       onChange={handleFormChange}
+                      onBlur={handleBlur}
                       disabled={step > 1}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 ${fieldErrors.phone ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                       placeholder="(555) 123-4567"
                     />
+                    {fieldErrors.phone && <p className="mt-1 text-xs text-red-600">{fieldErrors.phone}</p>}
                   </div>
 
                   <div className="border-t pt-4">
@@ -351,10 +394,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                           name="address"
                           value={checkoutForm.address}
                           onChange={handleFormChange}
+                          onBlur={handleBlur}
                           disabled={step > 1}
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 ${fieldErrors.address ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                           placeholder="123 Main St"
                         />
+                        {fieldErrors.address && <p className="mt-1 text-xs text-red-600">{fieldErrors.address}</p>}
                       </div>
 
                       <div className="grid sm:grid-cols-3 gap-4">
@@ -365,10 +410,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                             name="city"
                             value={checkoutForm.city}
                             onChange={handleFormChange}
+                            onBlur={handleBlur}
                             disabled={step > 1}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 ${fieldErrors.city ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                             placeholder="New York"
                           />
+                          {fieldErrors.city && <p className="mt-1 text-xs text-red-600">{fieldErrors.city}</p>}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-700 mb-1">State *</label>
@@ -378,10 +425,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                             maxLength={2}
                             value={checkoutForm.state}
                             onChange={(e) => handleFormChange({ target: { name: 'state', value: e.target.value.toUpperCase() }})}
+                            onBlur={handleBlur}
                             disabled={step > 1}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 uppercase"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 uppercase ${fieldErrors.state ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                             placeholder="NY"
                           />
+                          {fieldErrors.state && <p className="mt-1 text-xs text-red-600">{fieldErrors.state}</p>}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-700 mb-1">ZIP *</label>
@@ -391,10 +440,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                             maxLength={5}
                             value={checkoutForm.zipCode}
                             onChange={handleFormChange}
+                            onBlur={handleBlur}
                             disabled={step > 1}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-600 disabled:bg-slate-50 ${fieldErrors.zipCode ? 'border-red-400 focus:ring-red-400' : 'border-slate-300'}`}
                             placeholder="10001"
                           />
+                          {fieldErrors.zipCode && <p className="mt-1 text-xs text-red-600">{fieldErrors.zipCode}</p>}
                         </div>
                       </div>
                     </div>
@@ -402,16 +453,24 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
 
                   {step === 1 && (
                     <button
-                      onClick={() => setStep(2)}
-                      disabled={!canProceedToShipping()}
-                      className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold transition disabled:bg-slate-300 disabled:cursor-not-allowed"
+                      onClick={() => {
+                        const fields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
+                        const errors = {};
+                        fields.forEach(f => {
+                          const err = validateField(f, checkoutForm[f]);
+                          if (err) errors[f] = err;
+                        });
+                        setFieldErrors(errors);
+                        if (Object.keys(errors).length === 0) setStep(2);
+                      }}
+                      className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition"
                     >
                       Continue to Shipping
                     </button>
                   )}
 
                   {step > 1 && (
-                    <button onClick={() => setStep(1)} className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                    <button onClick={() => setStep(1)} className="text-rose-700 hover:text-rose-800 font-medium text-sm">
                       ← Edit Information
                     </button>
                   )}
@@ -446,8 +505,8 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
 
                 {!loadingShipping && shippingRates.length > 0 && (
                   <div className="space-y-2 mb-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                      <p className="text-sm text-blue-800">
+                    <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 mb-3">
+                      <p className="text-sm text-rose-900">
                         📦 Shipping from Clarkston, MI ({calculateWeight()} lb package)
                       </p>
                     </div>
@@ -458,7 +517,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                         onClick={() => setSelectedShipping(rate)}
                         className={`w-full text-left p-4 rounded-lg border-2 transition ${
                           selectedShipping?.id === rate.id
-                            ? 'border-blue-600 bg-blue-50'
+                            ? 'border-rose-700 bg-rose-50'
                             : 'border-slate-200 hover:border-slate-300'
                         }`}
                       >
@@ -474,7 +533,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                           </div>
                         </div>
                         {selectedShipping?.id === rate.id && (
-                          <div className="mt-2 text-sm text-blue-600 font-medium">✓ Selected</div>
+                          <div className="mt-2 text-sm text-rose-700 font-medium">✓ Selected</div>
                         )}
                       </button>
                     ))}
@@ -492,7 +551,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                     <button
                       onClick={() => setStep(3)}
                       disabled={!canProceedToPayment()}
-                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold transition disabled:bg-slate-300 disabled:cursor-not-allowed"
+                      className="flex-1 bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >
                       Continue to Payment
                     </button>
@@ -500,7 +559,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                 )}
 
                 {step > 2 && (
-                  <button onClick={() => setStep(2)} className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                  <button onClick={() => setStep(2)} className="text-rose-700 hover:text-rose-800 font-medium text-sm">
                     ← Change Shipping
                   </button>
                 )}
@@ -524,7 +583,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                 <button
                   onClick={handleStripeCheckout}
                   disabled={loadingPayment}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-semibold transition disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition disabled:bg-rose-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loadingPayment ? 'Redirecting to Stripe...' : (
                     <>
@@ -536,7 +595,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                   )}
                 </button>
 
-                <button onClick={() => setStep(2)} className="text-blue-600 hover:text-blue-700 font-medium text-sm mt-4">
+                <button onClick={() => setStep(2)} className="text-rose-700 hover:text-rose-800 font-medium text-sm mt-4">
                   ← Back to Shipping
                 </button>
               </div>

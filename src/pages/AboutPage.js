@@ -78,7 +78,7 @@ Join us in our mission to make fashion accessible, sustainable, and affordable f
       <main className="max-w-4xl mx-auto px-4 py-12">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-8 font-medium"
+          className="flex items-center gap-2 text-rose-700 hover:text-rose-800 mb-8 font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Home

@@ -59,7 +59,7 @@ function ContactModal({ isOpen, onClose }) {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Mail className="w-8 h-8 text-blue-600" />
+          <Mail className="w-8 h-8 text-rose-700" />
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Contact Us</h2>
             <p className="text-sm text-slate-600">We'll get back to you soon!</p>
@@ -77,7 +77,7 @@ function ContactModal({ isOpen, onClose }) {
               required
               value={formData.from_name}
               onChange={(e) => setFormData({...formData, from_name: e.target.value})}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-600"
               placeholder="Your name"
             />
           </div>
@@ -91,7 +91,7 @@ function ContactModal({ isOpen, onClose }) {
               required
               value={formData.from_email}
               onChange={(e) => setFormData({...formData, from_email: e.target.value})}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-600"
               placeholder="your.email@example.com"
             />
           </div>
@@ -105,7 +105,7 @@ function ContactModal({ isOpen, onClose }) {
               rows="4"
               value={formData.message}
               onChange={(e) => setFormData({...formData, message: e.target.value})}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-600 resize-none"
               placeholder="How can we help you?"
             />
           </div>

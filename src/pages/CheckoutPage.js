@@ -60,7 +60,7 @@ function CheckoutPage() {
             <button className="relative cursor-default">
               <ShoppingCart className="w-6 h-6 text-slate-600" />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-rose-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
@@ -78,7 +78,7 @@ function CheckoutPage() {
           <p className="text-slate-600 mb-6">Add some items before checking out.</p>
           <button
             onClick={() => navigate('/shop')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition"
+            className="bg-rose-700 text-white px-6 py-3 rounded-lg hover:bg-rose-800 font-semibold transition"
           >
             Browse Shop
           </button>

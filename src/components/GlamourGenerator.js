@@ -132,7 +132,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                 <div className="grid grid-cols-2 gap-2">
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                    className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center cursor-pointer hover:border-rose-400 hover:bg-rose-50 transition-colors"
                   >
                     <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
                     <p className="text-sm text-slate-600">Upload Photo</p>
@@ -140,7 +140,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                   </div>
                   <div
                     onClick={() => cameraInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                    className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center cursor-pointer hover:border-rose-400 hover:bg-rose-50 transition-colors"
                   >
                     <Camera className="w-7 h-7 text-slate-400 mx-auto mb-2" />
                     <p className="text-sm text-slate-600">Take Photo</p>
@@ -184,7 +184,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                 onClick={() => setMode('model')}
                 className={`p-3 rounded-lg border text-sm flex items-center gap-2 transition-all ${
                   mode === 'model'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                    ? 'border-rose-600 bg-rose-50 text-rose-800 font-medium'
                     : 'border-slate-200 hover:border-slate-300 text-slate-600'
                 }`}
               >
@@ -196,7 +196,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                 onClick={() => setMode('glamour')}
                 className={`p-3 rounded-lg border text-sm flex items-center gap-2 transition-all ${
                   mode === 'glamour'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                    ? 'border-rose-600 bg-rose-50 text-rose-800 font-medium'
                     : 'border-slate-200 hover:border-slate-300 text-slate-600'
                 }`}
               >
@@ -218,7 +218,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                     onClick={() => setModelType(t)}
                     className={`px-3 py-2 rounded-lg border text-xs capitalize transition-all ${
                       modelType === t
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                        ? 'border-rose-600 bg-rose-50 text-rose-800 font-medium'
                         : 'border-slate-200 hover:border-slate-300 text-slate-600'
                     }`}
                   >
@@ -312,7 +312,7 @@ function GlamourGenerator({ onImageGenerated, onClose, currentImage }) {
                 className={`flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${
                   isGenerating || !sourceImage
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-rose-700 text-white hover:bg-rose-800'
                 }`}
               >
                 {isGenerating ? (

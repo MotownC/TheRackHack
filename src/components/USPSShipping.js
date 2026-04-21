@@ -152,7 +152,7 @@ function USPSShipping({ cart = [], shippingAddress = {}, onShippingSelect }) {
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
       <div className="flex items-center gap-2">
-        <Truck className="w-5 h-5 text-blue-600" />
+        <Truck className="w-5 h-5 text-rose-700" />
         <h3 className="font-semibold text-slate-800">Shipping Options</h3>
       </div>
 
@@ -187,7 +187,7 @@ function USPSShipping({ cart = [], shippingAddress = {}, onShippingSelect }) {
               onClick={() => handleSelectRate(rate)}
               className={`w-full text-left p-4 rounded-lg border-2 transition ${
                 selectedRate?.id === rate.id
-                  ? 'border-blue-600 bg-blue-50'
+                  ? 'border-rose-700 bg-rose-50'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
@@ -203,7 +203,7 @@ function USPSShipping({ cart = [], shippingAddress = {}, onShippingSelect }) {
                 </div>
               </div>
               {selectedRate?.id === rate.id && (
-                <div className="mt-2 text-sm text-blue-600 font-medium">
+                <div className="mt-2 text-sm text-rose-700 font-medium">
                   ✓ Selected
                 </div>
               )}

@@ -61,7 +61,7 @@ function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-600 focus:border-transparent"
               placeholder="admin@example.com"
             />
           </div>
@@ -75,7 +75,7 @@ function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-600 focus:border-transparent"
               placeholder="••••••••"
             />
           </div>
@@ -83,7 +83,7 @@ function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
+            className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
           >
             <Lock className="w-5 h-5" />
             {loading ? 'Signing in...' : 'Sign In'}

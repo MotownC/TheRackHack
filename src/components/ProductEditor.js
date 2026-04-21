@@ -286,7 +286,7 @@ function ProductEditor({ product, onSave, onCancel }) {
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
+              className="flex-1 bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold flex items-center justify-center gap-2"
             >
               <Save className="w-5 h-5" />
               Save Product
