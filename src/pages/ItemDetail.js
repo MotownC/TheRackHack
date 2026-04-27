@@ -164,38 +164,44 @@ function ItemDetail() {
         
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
-            {/* Images Carousel */}
+            {/* Images Carousel — CSS Fadeshow style */}
             <div className="flex flex-col gap-3">
               {images.length > 0 ? (
                 <>
-                  {/* Main image */}
+                  {/* Fadeshow container: all images stacked, active one fades in */}
                   <div className="relative group bg-slate-100 rounded-xl overflow-hidden aspect-square">
-                    <img
-                      src={images[activeIndex]}
-                      alt={`${product.name} - ${activeIndex + 1}`}
-                      className="w-full h-full object-contain cursor-zoom-in transition-opacity duration-300"
-                      loading="lazy"
-                      onClick={() => { setFullscreenIndex(activeIndex); setFullscreenImage(images[activeIndex]); }}
-                      title="Click to view fullscreen"
-                    />
+                    {images.map((img, i) => (
+                      <img
+                        key={img}
+                        src={img}
+                        alt={`${product.name} - ${i + 1}`}
+                        className={`absolute inset-0 w-full h-full object-contain cursor-zoom-in ${
+                          i === activeIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
+                        style={{ transition: 'opacity 1s ease' }}
+                        loading="lazy"
+                        onClick={() => { setFullscreenIndex(activeIndex); setFullscreenImage(images[activeIndex]); }}
+                        title="Click to view fullscreen"
+                      />
+                    ))}
                     {images.length > 1 && (
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); goPrev(); }}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 z-10"
                           aria-label="Previous image"
                         >
                           <ChevronLeft size={22} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); goNext(); }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 z-10"
                           aria-label="Next image"
                         >
                           <ChevronRight size={22} />
                         </button>
                         {/* Dot indicator */}
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                           {images.map((_, i) => (
                             <button
                               key={i}

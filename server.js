@@ -4,6 +4,7 @@ const cors = require('cors');
 const Stripe = require('stripe');
 const { GoogleGenAI } = require('@google/genai');
 const cloudinary = require('cloudinary').v2;
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -202,6 +203,39 @@ app.post('/api/create-checkout-session', async (req, res) => {
   } catch (error) {
     console.error('Stripe Error:', error.message);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// --- CONTACT FORM ---
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { from_name, from_email, message } = req.body;
+
+    if (!from_name || !from_email || !message) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.CONTACT_EMAIL_USER,
+        pass: process.env.CONTACT_EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"${from_name}" <${process.env.CONTACT_EMAIL_USER}>`,
+      replyTo: from_email,
+      to: 'support@therackhack.com',
+      subject: `The Rack Hack - Message from ${from_name}`,
+      text: `Name: ${from_name}\nEmail: ${from_email}\n\n${message}`,
+      html: `<p><strong>Name:</strong> ${from_name}</p><p><strong>Email:</strong> <a href="mailto:${from_email}">${from_email}</a></p><hr/><p>${message.replace(/\n/g, '<br/>')}</p>`,
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Contact email error:', error.message);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 

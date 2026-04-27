@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, Mail, Send } from 'lucide-react';
-import emailjs from '@emailjs/browser';
 import GlowButton from './GlowButton';
 
 function ContactModal({ isOpen, onClose }) {
@@ -16,13 +15,15 @@ function ContactModal({ isOpen, onClose }) {
     setStatus('sending');
 
     try {
-      await emailjs.send(
-        'service_xfpjkds',      // Your Service ID
-        'template_z843byc',     // Your Template ID
-        formData,
-        'Cj8kuKa0IC_Q9CJI3'     // Your Public Key
-      );
-      
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error('Server error');
+
       setStatus('success');
       setFormData({ from_name: '', from_email: '', message: '' });
       
