@@ -53,6 +53,7 @@ function ContactModal({ isOpen, onClose }) {
         {/* Close button */}
         <button
           onClick={onClose}
+          aria-label="Close"
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
         >
           <X className="w-6 h-6" />
@@ -63,7 +64,7 @@ function ContactModal({ isOpen, onClose }) {
           <Mail className="w-8 h-8 text-rose-700" />
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Contact Us</h2>
-            <p className="text-sm text-slate-600">We'll get back to you soon!</p>
+            <p className="text-sm text-slate-600">We typically reply within 24 hours.</p>
           </div>
         </div>
 
@@ -120,7 +121,7 @@ function ContactModal({ isOpen, onClose }) {
           
           {status === 'error' && (
             <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">
-              Failed to send message. Please try again.
+              Couldn't send your message. Please check your connection and try again.
             </div>
           )}
 

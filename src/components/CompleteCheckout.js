@@ -91,6 +91,12 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
     setShippingError('');
     setShippingRates([]);
 
+    const fallbackRates = [
+      { service: 'USPS First Class', rate: 5.99, deliveryTime: '3-5 business days', id: 'first-class' },
+      { service: 'USPS Priority Mail', rate: 9.99, deliveryTime: '2-3 business days', id: 'priority' },
+      { service: 'USPS Priority Express', rate: 26.99, deliveryTime: '1-2 business days', id: 'express' }
+    ];
+
     try {
       const weight = calculateWeight();
       
@@ -207,23 +213,18 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
       }
 
       if (uniqueRates.length === 0) {
-        const availableCodes = data.rate_response.rates.map(r => r.service_type);
-        throw new Error(`Rates found, but rejected. Available: ${availableCodes.join(', ')}`);
+        // Live rates returned but none matched our filter — use fallback silently
+        setShippingRates(fallbackRates);
+        setSelectedShipping(fallbackRates[0]);
+        return;
       }
 
       setShippingRates(uniqueRates);
-      setSelectedShipping(uniqueRates[0]); // Auto-select cheapest
+      setSelectedShipping(uniqueRates[0]);
 
     } catch (err) {
       console.error('ShipEngine error:', err);
-      setShippingError(err.message || 'Failed to fetch shipping rates');
-      
-      // Fallback rates
-      const fallbackRates = [
-        { service: 'USPS First Class', rate: 5.99, deliveryTime: '3-5 business days', id: 'first-class' },
-        { service: 'USPS Priority Mail', rate: 9.99, deliveryTime: '2-3 business days', id: 'priority' },
-        { service: 'USPS Priority Express', rate: 26.99, deliveryTime: '1-2 business days', id: 'express' }
-      ];
+      setShippingError('Showing estimated rates — actual cost confirmed at shipment.');
       setShippingRates(fallbackRates);
       setSelectedShipping(fallbackRates[0]);
     } finally {
@@ -271,7 +272,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
       }
     } catch (err) {
       console.error('Payment error:', err);
-      setPaymentError(err.message || 'Payment failed');
+      setPaymentError('Something went wrong. Please try again or contact us for help.');
       setLoadingPayment(false);
     }
   };
@@ -418,7 +419,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                           {fieldErrors.city && <p className="mt-1 text-xs text-red-600">{fieldErrors.city}</p>}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">State *</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">State * <span className="font-normal text-slate-400 text-xs">(e.g. MI)</span></label>
                           <input
                             type="text"
                             name="state"
@@ -507,7 +508,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                   <div className="space-y-2 mb-4">
                     <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 mb-3">
                       <p className="text-sm text-rose-900">
-                        📦 Shipping from Clarkston, MI ({calculateWeight()} lb package)
+                        Shipping from Clarkston, MI ({calculateWeight()} lb package)
                       </p>
                     </div>
                     
@@ -546,7 +547,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                       onClick={() => setStep(1)}
                       className="flex-1 border border-slate-300 py-3 rounded-lg hover:bg-slate-50 font-semibold"
                     >
-                      Back
+                      ← Edit Information
                     </button>
                     <button
                       onClick={() => setStep(3)}
@@ -613,7 +614,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
               <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                 {cart.map((item, index) => (
                   <div key={index} className="flex gap-3 text-sm">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                    <img src={item.image} alt={item.name} className="w-16 h-16 object-contain bg-slate-100 rounded" />
                     <div className="flex-1">
                       <p className="font-medium text-slate-800">{item.name}</p>
                       <p className="text-slate-600 text-xs">Size: {item.size}</p>
@@ -633,7 +634,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Shipping</span>
-                  <span>{selectedShipping ? `$${shippingCost.toFixed(2)}` : 'TBD'}</span>
+                  <span>{selectedShipping ? `$${shippingCost.toFixed(2)}` : 'Select a method'}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>{isMichigan ? 'Sales Tax (MI 6%)' : 'Sales Tax'}</span>

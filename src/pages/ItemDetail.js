@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { getProductById } from '../services/productService';
 import { ToastContainer, useToast } from '../components/Toast';
+import { getCart, addItemToCart, getCartCount } from '../utils/cartUtils';
+import banner from '../assets/banner.png';
 
 function ItemDetail() {
   const { id } = useParams();
@@ -19,6 +21,7 @@ function ItemDetail() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [cartCount, setCartCount] = useState(() => getCartCount(getCart()));
   const { toasts, showToast, dismissToast } = useToast();
 
   useEffect(() => {
@@ -76,45 +79,21 @@ function ItemDetail() {
     return () => window.removeEventListener('keydown', onKey);
   }, [fullscreenImage, images.length, goNext, goPrev]);
 
-  // --- NEW: Function to handle adding to cart ---
   const handleAddToCart = () => {
-    try {
-      // 1. Get current cart from Local Storage
-      const savedCart = localStorage.getItem('cart');
-      const cart = savedCart ? JSON.parse(savedCart) : [];
-
-      // 2. Check if item is already in cart
-      const existingItem = cart.find(item => item.id === product.id);
-      let newCart;
-
-      if (existingItem) {
-        // Increment quantity if stock allows
-        if (existingItem.quantity < product.stock) {
-          newCart = cart.map(item =>
-            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-          );
-        } else {
-          showToast(`You already have all available stock in your cart`);
-          return;
-        }
-      } else {
-        // Add new item
-        newCart = [...cart, { ...product, quantity: 1 }];
-      }
-
-      // 3. Save back to Local Storage
-      localStorage.setItem('cart', JSON.stringify(newCart));
+    const { success, reason, cart } = addItemToCart(product);
+    if (!success && reason === 'at_limit') {
+      showToast('You already have all available stock in your cart');
+      return;
+    }
+    if (success) {
+      setCartCount(getCartCount(cart));
       showToast(`${product.name} added to cart`);
-
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      showToast('Failed to add item to cart');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="bg-white rounded-lg p-6 flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-700"></div>
           <span className="text-lg font-semibold">Loading...</span>
@@ -125,9 +104,9 @@ function ItemDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen bg-slate-50">
         <div className="container mx-auto p-4">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
             <h2 className="text-2xl font-bold text-slate-800 mb-4">Product Not Found</h2>
             <p className="text-slate-600 mb-6">The item you're looking for doesn't exist.</p>
             <Link 
@@ -144,7 +123,22 @@ function ItemDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/">
+            <img src={banner} alt="The Rack Hack" className="h-16" />
+          </Link>
+          <Link to="/checkout" className="relative p-1">
+            <ShoppingCart className="w-6 h-6 text-slate-600" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+        </div>
+      </header>
       <div className="container mx-auto p-4">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm mb-6 text-slate-500">
@@ -162,7 +156,7 @@ function ItemDetail() {
           <span className="text-slate-800 font-medium truncate max-w-[200px] sm:max-w-none">{product.name}</span>
         </nav>
         
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
             {/* Images Carousel — CSS Fadeshow style */}
             <div className="flex flex-col gap-3">
@@ -268,14 +262,8 @@ function ItemDetail() {
                   ) : product.stock <= 3 ? (
                     <span className="text-amber-600 font-medium">Only {product.stock} left!</span>
                   ) : (
-                    `${product.stock} in stock`
+                    'In stock'
                   )}
-                </p>
-                <p className="text-slate-600 mt-2">
-                  <span className="font-semibold">Condition:</span> {product.condition === 'new' ? 'New' : 'Pre-Owned'}
-                </p>
-                <p className="text-slate-600 mt-2">
-                  <span className="font-semibold">Category:</span> {product.gender === 'mens' ? "Men's" : product.gender === 'womens' ? "Women's" : "Kids'"}
                 </p>
               </div>
               

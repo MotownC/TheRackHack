@@ -120,10 +120,10 @@ function OrderSuccessPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin text-rose-700 mx-auto mb-4" />
-          <p className="text-slate-600 text-lg">Confirming your order...</p>
+          <p className="text-slate-600 text-lg">Verifying your payment...</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ function OrderSuccessPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen bg-slate-50">
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <img
@@ -146,11 +146,11 @@ function OrderSuccessPage() {
         <main className="max-w-2xl mx-auto px-4 py-12">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">Order Verification Issue</h1>
-            <p className="text-slate-600 mb-6">{error}</p>
+            <h1 className="text-2xl font-bold text-slate-800 mb-2">We couldn't confirm your order</h1>
+            <p className="text-slate-600 mb-6">We had trouble verifying your payment status.</p>
             <p className="text-slate-500 text-sm mb-6">
-              If you completed payment, your order was still processed.
-              Please contact us if you have any concerns.
+              If your payment went through, your order is confirmed — we have it.
+              Reach out and we'll sort it out right away.
             </p>
             <button
               onClick={() => navigate('/shop')}
@@ -165,7 +165,7 @@ function OrderSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-slate-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <img
@@ -211,7 +211,7 @@ function OrderSuccessPage() {
                   {orderDetails.items.map((item, index) => (
                     <div key={index} className="flex justify-between text-sm">
                       <span className="text-slate-600">
-                        {item.name} (Size: {item.size}) x{item.quantity}
+                        {item.name} — Size {item.size} × {item.quantity}
                       </span>
                       <span className="font-medium text-slate-800">
                         ${(item.price * item.quantity).toFixed(2)}
@@ -236,7 +236,7 @@ function OrderSuccessPage() {
                   </p>
                   {orderDetails.shippingService && (
                     <p className="text-slate-500 text-sm mt-1">
-                      Via: {orderDetails.shippingService}
+                      Shipped via {orderDetails.shippingService}
                     </p>
                   )}
                 </div>

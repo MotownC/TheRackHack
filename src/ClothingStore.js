@@ -17,6 +17,7 @@ import {
   saveAboutContent
 } from './services/productService';
 import { useAuth } from './contexts/AuthContext';
+import { getCart, addItemToCart } from './utils/cartUtils';
 
 const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' }) => {
   const navigate = useNavigate();
@@ -24,16 +25,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   const { currentUser, logout } = useAuth();
   const [products, setProducts] = useState([]);
 
-  // Initialize cart directly from Local Storage so it's never empty on load
-  const [cart, setCart] = useState(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error('Error parsing cart:', error);
-      return [];
-    }
-  });
+  const [cart, setCart] = useState(getCart);
 
   const [view, setView] = useState(initialView);
   const [orders, setOrders] = useState([]);
@@ -145,16 +137,9 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   }, [cart]);
 
   const addToCart = (product) => {
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
-      if (existing.quantity < product.stock) {
-        setCart(cart.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        ));
-        showToast(`${product.name} added to cart`);
-      }
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+    const { success, cart: newCart } = addItemToCart(product);
+    if (success) {
+      setCart(newCart);
       showToast(`${product.name} added to cart`);
     }
   };
@@ -164,16 +149,19 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   };
 
   const updateQuantity = (productId, delta) => {
-    setCart(cart.map(item => {
-      if (item.id === productId) {
-        const newQty = item.quantity + delta;
-        if (newQty <= 0) return null;
-        const product = products.find(p => p.id === productId);
-        if (newQty > product.stock) return item;
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }).filter(Boolean));
+    const item = cart.find(i => i.id === productId);
+    if (!item) return;
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+      setCart(cart.filter(i => i.id !== productId));
+      return;
+    }
+    const product = products.find(p => p.id === productId);
+    if (product && newQty > product.stock) {
+      showToast('No more stock available for this item');
+      return;
+    }
+    setCart(cart.map(i => i.id === productId ? { ...i, quantity: newQty } : i));
   };
 
   const handleSaveProduct = async (productData) => {
@@ -198,7 +186,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       setIsAddingProduct(false);
     } catch (error) {
       console.error('Error saving product:', error);
-      showToast('Failed to save product. Check console for errors.');
+      showToast('Couldn\'t save the product. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -213,7 +201,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       showToast('Product deleted');
     } catch (error) {
       console.error('Error deleting product:', error);
-      showToast('Failed to delete product');
+      showToast('Couldn\'t delete the product. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -226,7 +214,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       showToast('About page saved');
     } catch (error) {
       console.error('Error saving about content:', error);
-      showToast('Failed to save about page content');
+      showToast('Couldn\'t save your About page. Please try again.');
     }
   };
 
@@ -264,7 +252,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-slate-50">
   {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -350,7 +338,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
 
             {/* Gender Filter Buttons */}
             <div className="mb-4">
-              <p className="text-sm font-semibold text-slate-600 mb-2">CATEGORY</p>
+              <p className="text-sm font-semibold text-slate-600 mb-2">Department</p>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {[
                   { value: 'all', label: 'All' },
@@ -371,7 +359,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
 
             {/* Condition Filter Buttons */}
             <div className="mb-6">
-              <p className="text-sm font-semibold text-slate-600 mb-2">CONDITION</p>
+              <p className="text-sm font-semibold text-slate-600 mb-2">Condition</p>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {[
                   { value: 'all', label: 'All' },
@@ -417,7 +405,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
               {loading && products.length === 0 && (
                 <>
                   {[...Array(8)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                       <div className="w-full h-48 bg-slate-200 animate-pulse" />
                       <div className="p-4 space-y-3">
                         <div className="h-4 bg-slate-200 rounded animate-pulse w-3/4" />
@@ -445,7 +433,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 </div>
               )}
               {filteredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer group">
+                <div key={product.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(190,24,93,0.10)] transition-all duration-200 cursor-pointer group">
                   <Link to={`/item/${product.id}`}
       state={{
         savedGender: genderFilter,
@@ -479,7 +467,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                       ) : product.stock <= 3 ? (
                         <span className="text-sm font-medium text-amber-600">Only {product.stock} left!</span>
                       ) : (
-                        <span className="text-sm text-slate-500">{product.stock} in stock</span>
+                        <span className="text-sm text-slate-500">In stock</span>
                       )}
                     </div>
                     <GlowButton
@@ -501,7 +489,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           <div>
             <h1 className="text-3xl font-bold text-slate-800 mb-8">Shopping Cart</h1>
             {cart.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-md p-12 text-center">
+              <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                 <ShoppingCart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-600 text-lg">Your cart is empty</p>
                 <GlowButton
@@ -514,7 +502,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-4">
                   {cart.map(item => (
-                    <div key={item.id} className="bg-white rounded-lg shadow-md p-4 flex gap-4">
+                    <div key={item.id} className="bg-white rounded-xl border border-slate-200 p-4 flex gap-4">
                       <img src={item.image} alt={item.name} className="w-24 h-24 object-contain rounded bg-slate-100" loading="lazy" />
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{item.name}</h3>
@@ -548,7 +536,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                   ))}
                 </div>
                 {/* Right Column - Order Summary */}
-                <div className="bg-white rounded-lg shadow-md p-6 h-fit">
+                <div className="bg-white rounded-xl border border-slate-200 p-6 h-fit">
                   <h3 className="text-xl font-bold text-slate-800 mb-4">Order Summary</h3>
                   
                   <div className="border-t pt-4 mb-4">
@@ -594,7 +582,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             </div>
             
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -608,9 +596,9 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-600 text-sm">Items Sold</p>
-                    <p className="text-3xl font-bold text-purple-600">{totalItemsSold}</p>
+                    <p className="text-3xl font-bold text-rose-700">{totalItemsSold}</p>
                   </div>
-                  <ShoppingCart className="w-12 h-12 text-purple-600" />
+                  <ShoppingCart className="w-12 h-12 text-rose-700" />
                 </div>
               </div>
             </div>
@@ -652,18 +640,18 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                         <td className="px-6 py-4">
                           {confirmDeleteId === product.id ? (
                             <div className="flex gap-2 items-center">
-                              <span className="text-sm text-slate-600 whitespace-nowrap">Delete?</span>
+                              <span className="text-sm text-slate-600 whitespace-nowrap">Delete this product?</span>
                               <button
                                 onClick={() => handleDeleteProduct(product.id)}
                                 className="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium"
                               >
-                                Yes
+                                Delete
                               </button>
                               <button
                                 onClick={() => setConfirmDeleteId(null)}
                                 className="text-slate-600 hover:text-slate-800 px-3 py-1 border border-slate-300 rounded text-sm font-medium"
                               >
-                                No
+                                Cancel
                               </button>
                             </div>
                           ) : (
@@ -729,7 +717,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                     <div className="flex gap-3">
                       <button
                         onClick={handleSaveAbout}
-                        className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold"
+                        className="bg-rose-700 text-white px-6 py-2 rounded-lg hover:bg-rose-800 font-semibold"
                       >
                         Save Changes
                       </button>
