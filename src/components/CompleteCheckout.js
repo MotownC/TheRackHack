@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, MapPin, CreditCard, Package, Truck, AlertCircle, Loader, Lock } from 'lucide-react';
+import { ShoppingCart, MapPin, CreditCard, Package, Truck, AlertCircle, Loader, Lock, Plus, Minus, Trash2 } from 'lucide-react';
 
 // API URL from environment variable (defaults to localhost for development)
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const SAVED_ADDRESS_KEY = 'saved_address';
 
 function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComplete }) {
   const [step, setStep] = useState(1);
-  const [checkoutForm, setCheckoutForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: ''
+  const [checkoutForm, setCheckoutForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SAVED_ADDRESS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { name: '', email: '', phone: '', address: '', city: '', state: '', zipCode: '' };
   });
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [showSavedBanner, setShowSavedBanner] = useState(() => !!localStorage.getItem(SAVED_ADDRESS_KEY));
   
   // Shipping state
   const [shippingRates, setShippingRates] = useState([]);
@@ -164,7 +165,6 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
       if (!data.rate_response || !data.rate_response.rates || data.rate_response.rates.length === 0) {
         throw new Error('No shipping rates available');
       }
-      console.log("Raw Rates from ShipEngine:", data.rate_response.rates);
 
       // 1. Define the EXACT names found in your error log
       const allowedServices = [
@@ -285,6 +285,30 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
     }
   };
 
+  const updateCartItem = (itemId, delta) => {
+    const updated = cart
+      .map(i => i.id === itemId ? { ...i, quantity: i.quantity + delta } : i)
+      .filter(i => i.quantity > 0);
+    onUpdateCart(updated);
+    if (step > 1) {
+      setStep(1);
+      setShippingRates([]);
+      setSelectedShipping(null);
+      setShippingError('');
+    }
+  };
+
+  const removeCartItem = (itemId) => {
+    const updated = cart.filter(i => i.id !== itemId);
+    onUpdateCart(updated);
+    if (step > 1) {
+      setStep(1);
+      setShippingRates([]);
+      setSelectedShipping(null);
+      setShippingError('');
+    }
+  };
+
   const canProceedToShipping = () => {
     return checkoutForm.name && checkoutForm.email && checkoutForm.phone &&
            checkoutForm.address && checkoutForm.city && checkoutForm.state &&
@@ -331,12 +355,30 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
           <div className="lg:col-span-2 space-y-6">
             {/* Step 1: Contact Info */}
             {step >= 1 && (
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
                   Contact & Shipping Information
                 </h2>
-                
+
+                {showSavedBanner && step === 1 && (
+                  <div className="flex items-center justify-between bg-rose-50 border border-rose-200 rounded-lg px-4 py-2 mb-4 text-sm">
+                    <span className="text-rose-900">Using your saved address</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try { localStorage.removeItem(SAVED_ADDRESS_KEY); } catch {}
+                        setShowSavedBanner(false);
+                        setSaveAddress(false);
+                        setCheckoutForm({ name: '', email: '', phone: '', address: '', city: '', state: '', zipCode: '' });
+                      }}
+                      className="text-rose-700 hover:text-rose-800 font-medium"
+                    >
+                      Use a different address
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
@@ -453,21 +495,39 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                   </div>
 
                   {step === 1 && (
-                    <button
-                      onClick={() => {
-                        const fields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
-                        const errors = {};
-                        fields.forEach(f => {
-                          const err = validateField(f, checkoutForm[f]);
-                          if (err) errors[f] = err;
-                        });
-                        setFieldErrors(errors);
-                        if (Object.keys(errors).length === 0) setStep(2);
-                      }}
-                      className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition"
-                    >
-                      Continue to Shipping
-                    </button>
+                    <>
+                      {!showSavedBanner && (
+                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={saveAddress}
+                            onChange={e => setSaveAddress(e.target.checked)}
+                            className="rounded border-slate-300 accent-rose-700"
+                          />
+                          Save this address for next time
+                        </label>
+                      )}
+                      <button
+                        onClick={() => {
+                          const fields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
+                          const errors = {};
+                          fields.forEach(f => {
+                            const err = validateField(f, checkoutForm[f]);
+                            if (err) errors[f] = err;
+                          });
+                          setFieldErrors(errors);
+                          if (Object.keys(errors).length === 0) {
+                            if (saveAddress) {
+                              try { localStorage.setItem(SAVED_ADDRESS_KEY, JSON.stringify(checkoutForm)); } catch {}
+                            }
+                            setStep(2);
+                          }
+                        }}
+                        className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition"
+                      >
+                        Continue to Shipping
+                      </button>
+                    </>
                   )}
 
                   {step > 1 && (
@@ -481,7 +541,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
 
             {/* Step 2: Shipping */}
             {step >= 2 && (
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <Truck className="w-5 h-5" />
                   Shipping Method
@@ -569,15 +629,16 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
 
             {/* Step 3: Payment */}
             {step >= 3 && (
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
                   Payment
                 </h2>
                 
                 {paymentError && (
-                  <div className="text-red-600 bg-red-50 p-3 rounded-lg mb-4 text-sm">
-                    {paymentError}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-800">{paymentError}</p>
                   </div>
                 )}
                 
@@ -597,7 +658,7 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                 </button>
 
                 <button onClick={() => setStep(2)} className="text-rose-700 hover:text-rose-800 font-medium text-sm mt-4">
-                  ← Back to Shipping
+                  ← Change Shipping
                 </button>
               </div>
             )}
@@ -605,24 +666,51 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
+            <div className="bg-white rounded-xl border border-slate-200 p-6 sticky top-4">
               <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />
                 Order Summary
               </h2>
 
-              <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+              <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
                 {cart.map((item, index) => (
                   <div key={index} className="flex gap-3 text-sm">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-contain bg-slate-100 rounded" />
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-800">{item.name}</p>
-                      <p className="text-slate-600 text-xs">Size: {item.size}</p>
-                      <p className="text-slate-600 text-xs">Qty: {item.quantity}</p>
+                    <img src={item.image} alt={item.name} className="w-16 h-16 object-contain bg-slate-100 rounded flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="font-medium text-slate-800 leading-snug">{item.name}</p>
+                        <button
+                          onClick={() => removeCartItem(item.id)}
+                          className="text-slate-300 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+                          aria-label={`Remove ${item.name}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-slate-500 text-xs mt-0.5">Size: {item.size}</p>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => updateCartItem(item.id, -1)}
+                            className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-5 text-center font-medium text-slate-700">{item.quantity}</span>
+                          <button
+                            onClick={() => updateCartItem(item.id, 1)}
+                            className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <p className="font-semibold text-slate-800">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-semibold text-slate-800">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </p>
                   </div>
                 ))}
               </div>

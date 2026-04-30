@@ -38,7 +38,6 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   // This ensures that if the component re-mounts, we strictly apply the saved filters
   useEffect(() => {
     if (location.state) {
-      console.log("Restoring filters from history:", location.state);
       if (location.state.savedGender) {
         setGenderFilter(location.state.savedGender);
       }
@@ -73,7 +72,6 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
         
         // If Firebase is empty, seed it with starter products
         if (firebaseProducts.length === 0) {
-          console.log('Firebase empty, seeding with starter products...');
           const starterProducts = [
             { name: "Men's Denim Jacket", size: "L", price: 45.00, stock: 3, image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400", category: "Outerwear", gender: "mens", condition: "new" },
             { name: "Women's Floral Dress", size: "M", price: 35.00, stock: 5, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400", category: "Dresses", gender: "womens", condition: "used" },
@@ -101,7 +99,6 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           
           const seededProducts = await getAllProducts();
           setProducts(seededProducts);
-          console.log('✅ Firebase seeded with 18 products');
         } else {
           setProducts(firebaseProducts);
         }
@@ -126,18 +123,19 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           
   // Save cart when it changes
   useEffect(() => {
-    const saveCart = async () => {
-      try {
-        await localStorage.setItem('cart', JSON.stringify(cart));
-      } catch (error) {
-        console.error('Error saving cart:', error);
-      }
-    };
-    saveCart();
+    try {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    } catch (error) {
+      console.error('Error saving cart:', error);
+    }
   }, [cart]);
 
   const addToCart = (product) => {
-    const { success, cart: newCart } = addItemToCart(product);
+    const { success, reason, cart: newCart } = addItemToCart(product);
+    if (!success && reason === 'at_limit') {
+      showToast('You already have all available stock in your cart');
+      return;
+    }
     if (success) {
       setCart(newCart);
       showToast(`${product.name} added to cart`);
@@ -305,6 +303,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                 </button>
                 <button
                   onClick={() => setView('cart')}
+                  aria-label="View cart"
                   className="relative"
                 >
                   <ShoppingCart className="w-6 h-6 text-slate-600" />
@@ -583,7 +582,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-600 text-sm">Total Orders</p>
@@ -592,7 +591,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                   <Package className="w-12 h-12 text-rose-700" />
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-600 text-sm">Items Sold</p>
@@ -604,7 +603,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             </div>
 
             {/* Products Management */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-8">
               <div className="p-6 border-b">
                 <h2 className="text-xl font-bold text-slate-800">Manage Products</h2>
                 <p className="text-sm text-slate-500 mt-1">Scroll right to see all columns →</p>
@@ -679,7 +678,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             </div>
 
             {/* About Page Editor */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-8">
               <div className="p-6 border-b flex justify-between items-center">
                 <h2 className="text-xl font-bold text-slate-800">Edit About Page</h2>
                 {!isEditingAbout && (
@@ -701,7 +700,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                         type="text"
                         value={aboutContent.title}
                         onChange={(e) => setAboutContent({ ...aboutContent, title: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-600"
                         placeholder="Our Story"
                       />
                     </div>
@@ -710,7 +709,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                       <textarea
                         value={aboutContent.content}
                         onChange={(e) => setAboutContent({ ...aboutContent, content: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg h-64"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg h-64 focus:outline-none focus:ring-2 focus:ring-rose-600"
                         placeholder="Tell your story..."
                       />
                     </div>
@@ -739,7 +738,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             </div>
 
             {/* Orders Table */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               <div className="p-6 border-b">
                 <h2 className="text-xl font-bold text-slate-800">Recent Orders</h2>
               </div>
