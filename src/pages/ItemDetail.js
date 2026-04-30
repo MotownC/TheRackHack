@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { getProductById } from '../services/productService';
 import { ToastContainer, useToast } from '../components/Toast';
 import { getCart, addItemToCart, getCartCount } from '../utils/cartUtils';
+import GlowButton from '../components/GlowButton';
 import banner from '../assets/banner.png';
 
 function ItemDetail() {
@@ -267,13 +268,14 @@ function ItemDetail() {
                 </p>
               </div>
               
-              <button 
-                onClick={handleAddToCart} // <--- Added the click handler here
+              <GlowButton
+                label={product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className="bg-rose-700 text-white px-8 py-3 rounded-lg hover:bg-rose-800 transition disabled:bg-slate-300 disabled:cursor-not-allowed font-semibold text-lg"
-              >
-                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-              </button>
+                showIcon={product.stock > 0}
+                icon={ShoppingCart}
+                className="glow-btn-full"
+              />
               
             </div>
           </div>

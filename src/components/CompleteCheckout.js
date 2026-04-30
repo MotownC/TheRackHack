@@ -27,6 +27,10 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState('');
 
+  // Address validation state
+  const [validatingAddress, setValidatingAddress] = useState(false);
+  const [addressSuggestion, setAddressSuggestion] = useState(null);
+
   // Inline validation
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -309,6 +313,67 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
     }
   };
 
+  const toTitleCase = (str) =>
+    str?.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) || '';
+
+  const validateAddress = async () => {
+    setValidatingAddress(true);
+    try {
+      const response = await fetch(`${API_URL}/api/validate-address`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: {
+            address: checkoutForm.address,
+            city: checkoutForm.city,
+            state: checkoutForm.state,
+            zipCode: checkoutForm.zipCode
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'error') {
+        const msg = result.messages?.[0]?.message || 'Address not found. Please check and try again.';
+        setFieldErrors(prev => ({ ...prev, address: msg }));
+        return false;
+      }
+
+      const matched = result.matched_address;
+      if (matched) {
+        const suggestion = {
+          address: toTitleCase(matched.address_line1),
+          city: toTitleCase(matched.city_locality),
+          state: matched.state_province?.toUpperCase(),
+          zipCode: matched.postal_code?.substring(0, 5)
+        };
+        const isDifferent =
+          suggestion.address.toLowerCase() !== checkoutForm.address.toLowerCase() ||
+          suggestion.city.toLowerCase() !== checkoutForm.city.toLowerCase() ||
+          suggestion.zipCode !== checkoutForm.zipCode;
+
+        if (isDifferent) {
+          setAddressSuggestion(suggestion);
+          return false;
+        }
+      }
+
+      return true;
+    } catch {
+      return true; // API failure — don't block checkout
+    } finally {
+      setValidatingAddress(false);
+    }
+  };
+
+  const proceedToShipping = (form) => {
+    if (saveAddress) {
+      try { localStorage.setItem(SAVED_ADDRESS_KEY, JSON.stringify(form)); } catch {}
+    }
+    setStep(2);
+  };
+
   const canProceedToShipping = () => {
     return checkoutForm.name && checkoutForm.email && checkoutForm.phone &&
            checkoutForm.address && checkoutForm.city && checkoutForm.state &&
@@ -507,26 +572,57 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                           Save this address for next time
                         </label>
                       )}
-                      <button
-                        onClick={() => {
-                          const fields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
-                          const errors = {};
-                          fields.forEach(f => {
-                            const err = validateField(f, checkoutForm[f]);
-                            if (err) errors[f] = err;
-                          });
-                          setFieldErrors(errors);
-                          if (Object.keys(errors).length === 0) {
-                            if (saveAddress) {
-                              try { localStorage.setItem(SAVED_ADDRESS_KEY, JSON.stringify(checkoutForm)); } catch {}
-                            }
-                            setStep(2);
-                          }
-                        }}
-                        className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition"
-                      >
-                        Continue to Shipping
-                      </button>
+
+                      {addressSuggestion ? (
+                        <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+                          <p className="text-sm font-medium text-rose-900 mb-1">Did you mean this address?</p>
+                          <p className="text-sm text-rose-800">
+                            {addressSuggestion.address}<br />
+                            {addressSuggestion.city}, {addressSuggestion.state} {addressSuggestion.zipCode}
+                          </p>
+                          <div className="flex gap-3 mt-3">
+                            <button
+                              onClick={() => {
+                                const updated = { ...checkoutForm, ...addressSuggestion };
+                                setCheckoutForm(updated);
+                                setAddressSuggestion(null);
+                                proceedToShipping(updated);
+                              }}
+                              className="flex-1 bg-rose-700 text-white py-2 rounded-lg text-sm font-semibold hover:bg-rose-800"
+                            >
+                              Use this address
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAddressSuggestion(null);
+                                proceedToShipping(checkoutForm);
+                              }}
+                              className="flex-1 border border-rose-300 text-rose-700 py-2 rounded-lg text-sm font-semibold hover:bg-rose-50"
+                            >
+                              Keep mine
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const fields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
+                            const errors = {};
+                            fields.forEach(f => {
+                              const err = validateField(f, checkoutForm[f]);
+                              if (err) errors[f] = err;
+                            });
+                            setFieldErrors(errors);
+                            if (Object.keys(errors).length > 0) return;
+                            const ok = await validateAddress();
+                            if (ok) proceedToShipping(checkoutForm);
+                          }}
+                          disabled={validatingAddress}
+                          className="w-full bg-rose-700 text-white py-3 rounded-lg hover:bg-rose-800 font-semibold transition disabled:bg-rose-400 disabled:cursor-not-allowed"
+                        >
+                          {validatingAddress ? 'Checking address...' : 'Continue to Shipping'}
+                        </button>
+                      )}
                     </>
                   )}
 
@@ -557,10 +653,16 @@ function CompleteCheckout({ cart = [], onUpdateCart, customerInfo, onOrderComple
                 {shippingError && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-amber-800">
+                    <div className="text-sm text-amber-800 flex-1">
                       <p className="font-medium">Using estimated rates</p>
                       <p className="text-amber-700">{shippingError}</p>
                     </div>
+                    <button
+                      onClick={fetchShippingRates}
+                      className="text-xs font-medium text-amber-700 hover:text-amber-900 underline flex-shrink-0 mt-0.5"
+                    >
+                      Try again
+                    </button>
                   </div>
                 )}
 

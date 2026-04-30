@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Trash2, Plus, Minus, Package, TrendingUp, Mail, Edit, PlusCircle, LogOut, Lock, Search } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, Package, TrendingUp, Mail, Edit, PlusCircle, LogOut, Lock, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom'; 
 import ContactModal from './components/ContactModal';
 import ProductEditor from './components/ProductEditor';
@@ -59,6 +59,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const { toasts, showToast, dismissToast } = useToast();
 
  // Load data from Firebase on mount
@@ -143,7 +144,12 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   };
 
   const removeFromCart = (productId) => {
+    const previousCart = cart;
     setCart(cart.filter(item => item.id !== productId));
+    showToast('Item removed', {
+      action: { label: 'Undo', onClick: () => setCart(previousCart) },
+      duration: 5000
+    });
   };
 
   const updateQuantity = (productId, delta) => {
@@ -335,68 +341,93 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           <div>
             <h1 className="text-3xl font-bold text-slate-800 mb-6">Quality Clothing Deals</h1>
 
-            {/* Gender Filter Buttons */}
-            <div className="mb-4">
-              <p className="text-sm font-semibold text-slate-600 mb-2">Department</p>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {[
-                  { value: 'all', label: 'All' },
-                  { value: 'mens', label: "Men's" },
-                  { value: 'womens', label: "Women's" },
-                  { value: 'kids', label: 'Kids' }
-                ].map(({ value, label }) => (
+            {/* Mobile: search + filter button */}
+            {(() => {
+              const activeFilterCount = [
+                genderFilter !== 'all',
+                conditionFilter !== 'all',
+                sortOrder !== 'default'
+              ].filter(Boolean).length;
+              return (
+                <div className="md:hidden flex gap-2 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <input
+                      type="search"
+                      placeholder="Search products…"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent"
+                    />
+                  </div>
                   <button
-                    key={value}
-                    onClick={() => setGenderFilter(value)}
-                    className={genderFilter === value ? 'glow-filter-active' : 'glow-filter'}
+                    onClick={() => setFilterSheetOpen(true)}
+                    className="relative flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap"
                   >
-                    {label}
+                    <SlidersHorizontal className="w-4 h-4" />
+                    Filter & Sort
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-700 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                        {activeFilterCount}
+                      </span>
+                    )}
                   </button>
-                ))}
-              </div>
-            </div>
+                </div>
+              );
+            })()}
 
-            {/* Condition Filter Buttons */}
-            <div className="mb-6">
-              <p className="text-sm font-semibold text-slate-600 mb-2">Condition</p>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {[
-                  { value: 'all', label: 'All' },
-                  { value: 'new', label: 'New' },
-                  { value: 'used', label: 'Pre-Owned' }
-                ].map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setConditionFilter(value)}
-                    className={conditionFilter === value ? 'glow-filter-active' : 'glow-filter'}
-                  >
-                    {label}
-                  </button>
-                ))}
+            {/* Desktop: full filter controls */}
+            <div className="hidden md:block">
+              <div className="mb-4">
+                <p className="text-sm font-semibold text-slate-600 mb-2">Department</p>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {[
+                    { value: 'all', label: 'All' },
+                    { value: 'mens', label: "Men's" },
+                    { value: 'womens', label: "Women's" },
+                    { value: 'kids', label: 'Kids' }
+                  ].map(({ value, label }) => (
+                    <button key={value} onClick={() => setGenderFilter(value)} className={genderFilter === value ? 'glow-filter-active' : 'glow-filter'}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Search + Sort Row */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="search"
-                  placeholder="Search products…"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent"
-                />
+              <div className="mb-6">
+                <p className="text-sm font-semibold text-slate-600 mb-2">Condition</p>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {[
+                    { value: 'all', label: 'All' },
+                    { value: 'new', label: 'New' },
+                    { value: 'used', label: 'Pre-Owned' }
+                  ].map(({ value, label }) => (
+                    <button key={value} onClick={() => setConditionFilter(value)} className={conditionFilter === value ? 'glow-filter-active' : 'glow-filter'}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <select
-                value={sortOrder}
-                onChange={e => setSortOrder(e.target.value)}
-                className="sm:w-48 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent cursor-pointer"
-              >
-                <option value="default">Sort: Default</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="search"
+                    placeholder="Search products…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent"
+                  />
+                </div>
+                <select
+                  value={sortOrder}
+                  onChange={e => setSortOrder(e.target.value)}
+                  className="sm:w-48 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:border-transparent cursor-pointer"
+                >
+                  <option value="default">Sort: Default</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -871,6 +902,85 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
           }}
         />
       )}
+      {/* Mobile filter bottom sheet */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ${filterSheetOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setFilterSheetOpen(false)}
+      />
+      <div className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 md:hidden transition-transform duration-300 ease-out ${filterSheetOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="p-6 pb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-slate-800">Filter & Sort</h3>
+            <button onClick={() => setFilterSheetOpen(false)} aria-label="Close filters">
+              <X className="w-5 h-5 text-slate-500" />
+            </button>
+          </div>
+
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-slate-600 mb-2">Department</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'mens', label: "Men's" },
+                { value: 'womens', label: "Women's" },
+                { value: 'kids', label: 'Kids' }
+              ].map(({ value, label }) => (
+                <button key={value} onClick={() => setGenderFilter(value)} className={genderFilter === value ? 'glow-filter-active' : 'glow-filter'}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-slate-600 mb-2">Condition</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'new', label: 'New' },
+                { value: 'used', label: 'Pre-Owned' }
+              ].map(({ value, label }) => (
+                <button key={value} onClick={() => setConditionFilter(value)} className={conditionFilter === value ? 'glow-filter-active' : 'glow-filter'}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-sm font-semibold text-slate-600 mb-2">Sort By</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'default', label: 'Default' },
+                { value: 'price-asc', label: 'Price: Low to High' },
+                { value: 'price-desc', label: 'Price: High to Low' }
+              ].map(({ value, label }) => (
+                <button key={value} onClick={() => setSortOrder(value)} className={sortOrder === value ? 'glow-filter-active' : 'glow-filter'}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            {(genderFilter !== 'all' || conditionFilter !== 'all' || sortOrder !== 'default') && (
+              <button
+                onClick={() => { setGenderFilter('all'); setConditionFilter('all'); setSortOrder('default'); }}
+                className="flex-1 border border-slate-300 py-3 rounded-lg font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Clear All
+              </button>
+            )}
+            <button
+              onClick={() => setFilterSheetOpen(false)}
+              className="flex-1 bg-rose-700 text-white py-3 rounded-lg font-semibold hover:bg-rose-800"
+            >
+              Show Results
+            </button>
+          </div>
+        </div>
+      </div>
+
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );

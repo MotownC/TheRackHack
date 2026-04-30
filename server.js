@@ -105,6 +105,33 @@ app.post('/api/get-rates', async (req, res) => {
   }
 });
 
+// --- ADDRESS VALIDATION ---
+app.post('/api/validate-address', async (req, res) => {
+  try {
+    const API_KEY = process.env.REACT_APP_SHIPENGINE_API_KEY || process.env.SHIPENGINE_API_KEY;
+    const { address } = req.body;
+
+    const response = await fetch('https://api.shipengine.com/v1/addresses/validate', {
+      method: 'POST',
+      headers: { 'API-Key': API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify([{
+        address_line1: address.address,
+        city_locality: address.city,
+        state_province: address.state,
+        postal_code: address.zipCode,
+        country_code: 'US'
+      }])
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Validation failed');
+    res.json(data[0]);
+  } catch (error) {
+    console.error('Address validation error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- STRIPE ROUTES ---
 
 // Verify a checkout session (for success page)
