@@ -251,7 +251,7 @@ function ItemDetail() {
               </div>
               <h1 className="text-3xl font-bold text-slate-800 mb-4">{product.name}</h1>
               <p className="text-sm text-slate-600 mb-4">Size: {product.size}</p>
-              <p className="text-3xl text-green-600 font-bold mb-6">${product.price.toFixed(2)}</p>
+              <p className="text-3xl text-rose-700 font-bold mb-6">${product.price.toFixed(2)}</p>
               
               {product.description && (
                 <div className="mb-6">

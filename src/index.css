@@ -116,9 +116,21 @@ code {
   box-shadow: none;
 }
 
-/* Filter button - active state (glow) */
+/* Filter button - active state */
 .glow-filter-active {
   padding: 0.5rem 1.25rem;
   min-height: 44px;
+  font-weight: 600;
   font-size: 0.875rem;
+  color: #ffffff;
+  background: #be185d;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-shadow: none;
+}
+
+.glow-filter-active:hover {
+  background: #9f1239;
 }

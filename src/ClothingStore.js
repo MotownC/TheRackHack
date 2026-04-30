@@ -67,6 +67,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { toasts, showToast, dismissToast } = useToast();
 
  // Load data from Firebase on mount
@@ -197,24 +198,24 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
       setIsAddingProduct(false);
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Failed to save product. Check console for errors.');
+      showToast('Failed to save product. Check console for errors.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        setLoading(true);
-        await deleteProduct(productId);
-        setProducts(products.filter(p => p.id !== productId));
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        alert('Failed to delete product. Check console for errors.');
-      } finally {
-        setLoading(false);
-      }
+    try {
+      setLoading(true);
+      setConfirmDeleteId(null);
+      await deleteProduct(productId);
+      setProducts(products.filter(p => p.id !== productId));
+      showToast('Product deleted');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      showToast('Failed to delete product');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -222,10 +223,10 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
     try {
       await saveAboutContent(aboutContent);      
       setIsEditingAbout(false);
-      alert('About page updated successfully!');
+      showToast('About page saved');
     } catch (error) {
       console.error('Error saving about content:', error);
-      alert('Failed to save about page content.');
+      showToast('Failed to save about page content');
     }
   };
 
@@ -345,11 +346,11 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
         
         {view === 'shop' && (
           <div>
-            <h2 className="text-3xl font-bold text-slate-800 mb-6">Quality Clothing Deals</h2>
-            
+            <h1 className="text-3xl font-bold text-slate-800 mb-6">Quality Clothing Deals</h1>
+
             {/* Gender Filter Buttons */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-slate-600 mb-2">CATEGORY</h3>
+              <p className="text-sm font-semibold text-slate-600 mb-2">CATEGORY</p>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {[
                   { value: 'all', label: 'All' },
@@ -360,7 +361,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                   <button
                     key={value}
                     onClick={() => setGenderFilter(value)}
-                    className={genderFilter === value ? 'glow-btn glow-filter-active' : 'glow-filter'}
+                    className={genderFilter === value ? 'glow-filter-active' : 'glow-filter'}
                   >
                     {label}
                   </button>
@@ -370,7 +371,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
 
             {/* Condition Filter Buttons */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-slate-600 mb-2">CONDITION</h3>
+              <p className="text-sm font-semibold text-slate-600 mb-2">CONDITION</p>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {[
                   { value: 'all', label: 'All' },
@@ -380,7 +381,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                   <button
                     key={value}
                     onClick={() => setConditionFilter(value)}
-                    className={conditionFilter === value ? 'glow-btn glow-filter-active' : 'glow-filter'}
+                    className={conditionFilter === value ? 'glow-filter-active' : 'glow-filter'}
                   >
                     {label}
                   </button>
@@ -498,7 +499,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
 
         {view === 'cart' && (
           <div>
-            <h2 className="text-3xl font-bold text-slate-800 mb-8">Shopping Cart</h2>
+            <h1 className="text-3xl font-bold text-slate-800 mb-8">Shopping Cart</h1>
             {cart.length === 0 ? (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
                 <ShoppingCart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -582,7 +583,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
         {view === 'admin' && (
           <div>
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-800">Admin Dashboard</h2>
+              <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
               <button
                 onClick={() => setIsAddingProduct(true)}
                 className="bg-rose-700 text-white px-6 py-3 rounded-lg hover:bg-rose-800 font-semibold flex items-center gap-2"
@@ -617,7 +618,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             {/* Products Management */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
               <div className="p-6 border-b">
-                <h3 className="text-xl font-bold text-slate-800">Manage Products</h3>
+                <h2 className="text-xl font-bold text-slate-800">Manage Products</h2>
                 <p className="text-sm text-slate-500 mt-1">Scroll right to see all columns →</p>
               </div>
               <div className="overflow-x-auto">
@@ -649,20 +650,38 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
                         <td className="px-6 py-4 text-sm text-slate-600">${product.price.toFixed(2)}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{product.stock}</td>
                         <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditingProduct(product)}
-                              className="text-rose-700 hover:text-rose-900 px-3 py-1 border border-rose-700 rounded hover:bg-rose-50 text-sm font-medium"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteProduct(product.id)}
-                              className="text-red-600 hover:text-red-800 px-3 py-1 border border-red-600 rounded hover:bg-red-50 text-sm font-medium"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          {confirmDeleteId === product.id ? (
+                            <div className="flex gap-2 items-center">
+                              <span className="text-sm text-slate-600 whitespace-nowrap">Delete?</span>
+                              <button
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-medium"
+                              >
+                                Yes
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="text-slate-600 hover:text-slate-800 px-3 py-1 border border-slate-300 rounded text-sm font-medium"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setEditingProduct(product)}
+                                className="text-rose-700 hover:text-rose-900 px-3 py-1 border border-rose-700 rounded hover:bg-rose-50 text-sm font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(product.id)}
+                                className="text-red-600 hover:text-red-800 px-3 py-1 border border-red-600 rounded hover:bg-red-50 text-sm font-medium"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -674,7 +693,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             {/* About Page Editor */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
               <div className="p-6 border-b flex justify-between items-center">
-                <h3 className="text-xl font-bold text-slate-800">Edit About Page</h3>
+                <h2 className="text-xl font-bold text-slate-800">Edit About Page</h2>
                 {!isEditingAbout && (
                   <button
                     onClick={() => setIsEditingAbout(true)}
@@ -734,7 +753,7 @@ const ClothingStore = ({ initialView = 'shop', initialConditionFilter = 'all' })
             {/* Orders Table */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="p-6 border-b">
-                <h3 className="text-xl font-bold text-slate-800">Recent Orders</h3>
+                <h2 className="text-xl font-bold text-slate-800">Recent Orders</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
